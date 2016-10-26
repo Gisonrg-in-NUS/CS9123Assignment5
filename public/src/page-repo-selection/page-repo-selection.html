@@ -1,0 +1,85 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="page-repo-selection">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host {
+      }
+
+      .flex-center-align {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        height: 640px;
+        align-items: center;
+      }
+
+      .main-container {
+        position: relative;
+        z-index: 999;
+      }
+
+      .center-text {
+        text-align: center;
+      }
+
+      #particles-js {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <div id="particles-js"></div>
+    <div class="main-container horizontal flex-center-align">
+      <div class="flex"></div>
+      <div class="container flex-2">
+        <paper-input id="input-github-repo" label="Github Repo Url" always-float-label placeholder="UserName/RepoName"
+                     error-message="Please check your repo format">
+          <div prefix>github.com/</div>
+        </paper-input>
+        <div class="center-text">
+          <paper-button raised id="btn-select-repo">Go</paper-button>
+        </div>
+      </div>
+      <div class="flex"></div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+
+      is: 'page-repo-selection',
+
+      properties: {},
+
+      listeners: {},
+
+      ready: function () {
+        var pattern = /^([\w\-\.]+)\/([\w\-\.]+)$/
+        var self = this;
+        this.$$('#btn-select-repo').addEventListener('click', function (e) {
+          e.preventDefault();
+          var input = self.$$('#input-github-repo');
+          var githubUrl = input.value.trim();
+          var isMatch = githubUrl.match(pattern);
+          if (isMatch) {
+            var userName = isMatch[1];
+            var repoName = isMatch[2];
+            document.querySelector('git-guard-app').checkoutRepo(userName, repoName);
+          } else {
+            input.invalid = true;
+          }
+        });
+        this.$$('#input-github-repo').addEventListener('input', function (e) {
+          e.target.invalid = false;
+          e.preventDefault();
+        });
+      },
+
+      attached: function () {
+        particlesJS.load('particles-js', 'particles.json');
+      }
+    });
+  </script>
+</dom-module>

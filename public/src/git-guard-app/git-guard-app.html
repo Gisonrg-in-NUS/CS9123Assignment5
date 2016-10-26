@@ -1,0 +1,65 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="git-guard-app">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host{}
+
+      .title-toolbar {
+        text-align: center;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <app-header-layout>
+      <app-header effects="waterfall" condenses reveals>
+        <app-toolbar>
+        </app-toolbar>
+        <app-toolbar class="title-toolbar">
+          <div main-title>{{title}}</div>
+        </app-toolbar>
+      </app-header>
+
+      <iron-pages selected="{{selected}}">
+        <page-repo-selection></page-repo-selection>
+        <page-main-app></page-main-app>
+      </iron-pages>
+
+      <github-api-manager></github-api-manager>
+    </app-header-layout>
+  </template>
+  <script>
+    Polymer({
+
+      is: 'git-guard-app',
+
+      properties: {
+        selected: {
+          type: String,
+          value: 0
+        },
+        title: {
+          type: String,
+          value: "Git Guard"
+        }
+      },
+
+      listeners: {},
+
+      ready:function(){},
+
+      attached:function(){
+      },
+
+      checkoutRepo: function(user, repo) {
+        document.querySelector('github-api-manager').getRepo(user, repo).done(function(res) {
+          console.log(res);
+//          this.selected = 1;
+//          this.title = userName + '/' + repoName
+        }).catch(function(err) {
+          console.error(err);
+        })
+      }
+    });
+  </script>
+</dom-module>

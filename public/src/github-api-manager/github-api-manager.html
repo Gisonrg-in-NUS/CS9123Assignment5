@@ -1,0 +1,42 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="github-api-manager">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host{}
+       /* Element Own CSS Styles */
+    </style>
+
+  </template>
+  <script>
+    Polymer({
+
+      is: 'github-api-manager',
+
+      properties: {
+        access_token: {
+          type: String,
+          value: 'fb54db6aef29a47700ba95b9df186d5676df21c8'
+        }
+      },
+
+      listeners: {},
+
+      ready:function(){},
+
+      attached:function(){},
+
+      getRepo: function(owner, repo) {
+        var self = this;
+        var endPoint = 'https://api.github.com/repos/' + owner + '/' + repo;
+        return $.ajax({
+          url: endPoint,
+          dataType: 'json',
+          headers: {
+            Authorization: 'token ' + self.access_token
+          }
+        })
+      }
+    });
+  </script>
+</dom-module>
