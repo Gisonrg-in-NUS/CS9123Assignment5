@@ -52,12 +52,15 @@
       },
 
       checkoutRepo: function(user, repo) {
+        var self = this;
         document.querySelector('github-api-manager').getRepo(user, repo).done(function(res) {
           console.log(res);
-//          this.selected = 1;
-//          this.title = userName + '/' + repoName
-        }).catch(function(err) {
-          console.error(err);
+          self.selected = 1;
+          self.title = res.full_name;
+          self.$$('page-main-app').repo = res;
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+          console.error(errorThrown);
         })
       }
     });

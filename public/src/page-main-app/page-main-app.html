@@ -8,22 +8,35 @@
       app-toolbar {
         background-color: #4285f4;
         color: #fff;
+        font-size: 14px;
+        font-weight:lighter;
       }
     </style>
 
     <!-- HTML Contents -->
     <app-toolbar>
-
+      <paper-icon-button icon="accessibility"></paper-icon-button>
+      <div>Watch: {{repo.watchers_count}}</div>
+      <paper-icon-button icon="star" spacer></paper-icon-button>
+      <div>Star:{{repo.stargazers_count}}</div>
+      <paper-icon-button icon="play-for-work" spacer></paper-icon-button>
+      <div>Fork:{{repo.forks_count}}</div>
+      <paper-icon-button icon="code" spacer></paper-icon-button>
+      <div>Language:{{repo.language}}</div>
     </app-toolbar>
 
-    asd
+
+
+
   </template>
   <script>
     Polymer({
 
       is: 'page-main-app',
 
-      properties: {},
+      properties: {
+        repo: Object
+      },
 
       listeners: {},
 
