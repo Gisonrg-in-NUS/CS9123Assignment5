@@ -13,8 +13,6 @@
     <!-- HTML Contents -->
     <app-header-layout>
       <app-header effects="waterfall" condenses reveals>
-        <app-toolbar>
-        </app-toolbar>
         <app-toolbar class="title-toolbar">
           <div main-title>{{title}}</div>
         </app-toolbar>
@@ -61,7 +59,7 @@
         }).fail(function(jqXHR, textStatus, errorThrown) {
           alert(errorThrown);
           console.error(errorThrown);
-        })
+        });
       }
     });
   </script>

@@ -1,0 +1,76 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="member-contribution-detail-card">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host{}
+      /* Element Own CSS Styles */
+      paper-card {
+        width: 400px;
+        height: 160px;
+      }
+      .rate-image {
+        width: 160px;
+        height: 160px;
+        background-size: cover;
+        float: right;
+      }
+      .rate-content {
+        @apply(--layout-flex);
+        float: left;
+      }
+      .name {
+        @apply(--paper-font-headline);
+      }
+      .contribution {
+        color: var(--paper-grey-600);
+        margin: 10px 0;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <paper-card class="rate">
+      <div class="rate-content">
+        <div class="card-content">
+          <div class="name">{{member.x}}</div>
+          <div class="contribution">% of Commits: {{_calculateContribution(member)}}%</div>
+          <div>Additions: {{member.a}}</div>
+          <div>Deletions: {{member.d}}</div>
+          <div>Commits: {{member.c}}</div>
+        </div>
+      </div>
+      <div class="rate-image"></div>
+    </paper-card>
+
+  </template>
+  <script>
+    Polymer({
+
+      is: 'member-contribution-detail-card',
+
+      properties: {
+        member: {
+          observer: '_selectedMemberChanged'
+        }
+      },
+
+      listeners: {},
+
+      ready:function(){},
+
+      attached:function(){},
+
+      _selectedMemberChanged: function(data) {
+        $(Polymer.dom(this.root).querySelector('.rate-image')).css('background-image', 'url(' + data.avatar + ')')
+      },
+
+      _calculateContribution: function(data) {
+        return Math.round(data.percentage  * 10000) / 100;
+      }
+
+//      myFunctions:function(){}
+    });
+  </script>
+</dom-module>
+
+

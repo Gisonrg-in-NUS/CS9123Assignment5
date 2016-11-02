@@ -11,6 +11,10 @@
         font-size: 14px;
         font-weight:lighter;
       }
+
+      .container {
+        padding: 8px 4px;
+      }
     </style>
 
     <!-- HTML Contents -->
@@ -25,9 +29,9 @@
       <div>Language:{{repo.language}}</div>
     </app-toolbar>
 
-
-
-
+    <div class="container">
+      <all-contributions></all-contributions>
+    </div>
   </template>
   <script>
     Polymer({
@@ -35,14 +39,33 @@
       is: 'page-main-app',
 
       properties: {
-        repo: Object
+        repo: {
+          type: Object,
+          observer: '_repoChanged'
+        }
       },
 
       listeners: {},
 
       ready:function(){},
 
-      attached:function(){}
+      attached:function(){},
+
+      _repoChanged: function(repo) {
+        var repoOwner = repo.owner.login;
+        var repoName = repo.name;
+        this._handleAllContributors(repoOwner, repoName);
+      },
+
+      _handleAllContributors: function(user, repo) {
+        var self = this;
+        document.querySelector('github-api-manager').getAllContributors(user, repo).done(function(res) {
+          self.$$('all-contributions').data = res;
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+          console.error(errorThrown);
+        });
+      }
 
 //      myFunctions:function(){}
     });

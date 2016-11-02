@@ -35,7 +35,18 @@
           headers: {
             Authorization: 'token ' + self.access_token
           }
-        })
+        });
+      },
+      getAllContributors: function(owner, repo) {
+        var self = this;
+        var endPoint = 'https://api.github.com/repos/' + owner + '/' + repo + '/stats/contributors';
+        return $.ajax({
+          url: endPoint,
+          dataType: 'json',
+          headers: {
+            Authorization: 'token ' + self.access_token
+          }
+        });
       }
     });
   </script>

@@ -1,0 +1,165 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="all-contributions">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host{}
+      /* Element Own CSS Styles */
+
+      .container {
+        padding: 20px;
+      }
+
+      #visualization-all-contribution {
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .member-detail {
+        text-align: center;
+      }
+
+      [hidden] {
+        display:none;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <div class="container">
+      <p>Contributions of all team members</p>
+      <div id="visualization-all-contribution">
+      </div>
+      <div class="member-detail">
+        <member-contribution-detail-card hidden$="{{!hasSelectedMember}}"></member-contribution-detail-card>
+        <div hidden$="{{hasSelectedMember}}">
+          Select a member in the bar chart to show member details.
+        </div>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+
+      is: 'all-contributions',
+
+      properties: {
+        'data': {
+          observer: '_onDataChanged'
+        },
+        'hasSelectedMember': {
+          type: Boolean,
+          value: false
+        }
+      },
+
+      listeners: {},
+
+      ready:function(){},
+
+      attached:function(){},
+
+      _onDataChanged: function(data) {
+        var totalCommits = 0;
+        var user_data = data.reduce(function(pre, cur) {
+          var counts = cur.weeks.reduce(function(pre, cur) {
+            pre['a'] += cur['a'];
+            pre['d'] += cur['d'];
+            pre['c'] += cur['c'];
+            return pre;
+          }, {
+            'a': 0,
+            'd': 0,
+            'c': 0
+          });
+          totalCommits += counts['c'];
+          pre.unshift({x: cur.author.login, avatar: cur.author.avatar_url, a: counts['a'], d: counts['d'], c: counts['c']});
+          return pre;
+        }, []).map(function(x) {
+          x['percentage'] = x.c / totalCommits;
+          return x;
+        });
+        this._drawChart(user_data);
+      },
+
+      _drawChart: function(data) {
+        var self = this;
+        var margin = {top: 40, right: 20, bottom: 200, left: 40},
+                width = 1400 - margin.left - margin.right,
+                height = 800 - margin.top - margin.bottom;
+        var svg = d3.select("#visualization-all-contribution").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        var formatPercent = d3.format(".0%");
+
+        var x = d3.scale.ordinal()
+                .rangeRoundBands([0, width], .1);
+
+        var y = d3.scale.linear()
+                .range([height, 0]);
+
+        var xAxis = d3.svg.axis()
+                .scale(x)
+                .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+                .scale(y)
+                .orient("left")
+                .tickFormat(formatPercent);
+
+        var tip = d3.tip()
+          .attr('class', 'd3-tip')
+          .offset([-10, 0])
+          .html(function(d) {
+            var display = '<strong>' + d.x + '</strong><br/><strong>Additions: </strong>' + d.a
+                    + '<br/><strong>Deletions: </strong>' + d.d + '<br/><strong>Commits: </strong>' + d.c
+                    + '<br/><strong>Contributions(%): </strong>' + Math.round(d.percentage * 10000) / 100 + '%';
+            return display;
+          })
+
+        svg.call(tip);
+
+        x.domain(data.map(function(d) { return d.x; }));
+        y.domain([0, d3.max(data, function(d) { return d.percentage; })]);
+
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis)
+                .selectAll("text")
+                .attr("y", 0)
+                .attr("x", 9)
+                .attr("dy", ".35em")
+                .attr("transform", "rotate(90)")
+                .style("text-anchor", "start");
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+                .append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 6)
+                .attr("dy", ".71em")
+                .style("text-anchor", "end")
+                .text("Contributions (%)");
+
+        svg.selectAll(".bar")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function(d) { return x(d.x); })
+                .attr("width", x.rangeBand() - 1)
+                .attr("y", function(d) { return y(d.percentage); })
+                .attr("height", function(d) { return height - y(d.percentage); })
+                .on('mouseover', tip.show)
+                .on('mouseout', tip.hide)
+                .on("click", function(d) {
+                  self.hasSelectedMember = true;
+                  self.$$('member-contribution-detail-card').member = d;
+                  d3.event.stopPropagation();
+                });
+      }
+    });
+  </script>
+</dom-module>
