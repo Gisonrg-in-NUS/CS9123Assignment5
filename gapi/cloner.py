@@ -5,17 +5,10 @@ import sys
 
 import filelock
 
-BASE_PATH = 'var'
-CLONE_PATH = os.path.join(BASE_PATH, 'repo')
-FLAG_PATH = os.path.join(BASE_PATH, 'flag')
-LOCK_PATH = os.path.join(BASE_PATH, 'lock')
-BLAME_PATH = os.path.join(BASE_PATH, 'blame')
+from common import get_clone_path, get_blame_path, get_lock_path, get_flag_path
 
 
 def create_lock(lock_path):
-    directory = os.path.dirname(lock_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
     try:
         with open(lock_path, 'x') as f:
             f.write('')
@@ -24,19 +17,13 @@ def create_lock(lock_path):
 
 
 def touch_flag(flag_path):
-    directory = os.path.dirname(flag_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
     with open(flag_path, 'w') as f:
         f.write('')
 
 
 def blame(repo):
-    repo_path = os.path.join(CLONE_PATH, repo)
-    blame_path = os.path.join(BLAME_PATH, repo)
-    directory = os.path.dirname(blame_path)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    repo_path = get_clone_path(repo)
+    blame_path = get_blame_path(repo)
     p = subprocess.Popen(["git", "ls-files"], bufsize=1, stdout=subprocess.PIPE, cwd=repo_path).stdout
     lines = p.readlines()
     p.close()
@@ -69,13 +56,13 @@ def blame(repo):
 
 
 def clone(repo):
-    lock_path = os.path.join(LOCK_PATH, repo)
+    lock_path = get_lock_path(repo)
     create_lock(lock_path)
     lock = filelock.FileLock(lock_path)
     with lock:
-        flag_path = os.path.join(FLAG_PATH, repo)
+        flag_path = get_flag_path(repo)
         url = 'https://github.com/%s.git' % repo
-        clone_path = os.path.join(CLONE_PATH, repo)
+        clone_path = get_clone_path(repo)
         if os.path.isfile(flag_path):
             os.remove(flag_path)
             subprocess.run(["git", "pull"], cwd=clone_path)
