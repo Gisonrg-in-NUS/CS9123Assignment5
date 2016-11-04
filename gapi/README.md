@@ -70,3 +70,26 @@ Failures:
 {'message': 'Not a valid GitHub repo.'}, 400
 {'message': 'Wait ah...'}, 202
 ```
+
+## Line Count in Final Project
+
+GET: `https://cs9123a5.saki.sshz.org/blame/CNA-Bld/EOPlugins`
+
+Response:
+
+```json
+[
+    {
+        "author": "CNA-Bld",
+        "email": "cna.bld@gmail.com",
+        "lines": 24308
+    }
+]
+```
+
+Failures:
+
+```
+{'message': 'Not a valid GitHub repo.'}, 400
+{'message': 'Wait ah...'}, 202
+```

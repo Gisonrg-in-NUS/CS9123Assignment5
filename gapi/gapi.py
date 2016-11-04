@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -6,6 +7,7 @@ import sys
 BASE_PATH = 'var'
 CLONE_PATH = os.path.join(BASE_PATH, 'repo')
 FLAG_PATH = os.path.join(BASE_PATH, 'flag')
+BLAME_PATH = os.path.join(BASE_PATH, 'blame')
 
 repo_regex = re.compile("\A([-_\w]+)/([-_.\w]+)\Z")
 log_regex = re.compile("\A(.+)\|(.+)\|(.+)\|(.+)\|(.*)\Z")
@@ -31,9 +33,8 @@ def file_log(repo, filename, linenos):
         cmds += ["-L", ":".join((linenos, filename))]
     else:
         cmds += ["--", filename]
-
+    print(cmds)
     repo_path = os.path.join(CLONE_PATH, repo)
-    print(' '.join(cmds))
     p = subprocess.Popen(cmds, bufsize=1, stdout=subprocess.PIPE, cwd=repo_path).stdout
     lines = p.readlines()
     p.close()
@@ -50,4 +51,6 @@ def file_log(repo, filename, linenos):
 
 
 def blame(repo):
-    return []
+    blame_path = os.path.join(BLAME_PATH, repo)
+    with open(blame_path, 'r') as f:
+        return json.load(f)
