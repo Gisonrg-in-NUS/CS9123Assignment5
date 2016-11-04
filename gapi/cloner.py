@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+from multiprocessing import Pool
 
 import filelock
 
@@ -21,6 +22,31 @@ def touch_flag(flag_path):
         f.write('')
 
 
+def blame_file(args):
+    repo_path, filename = args
+    
+    authors = {}
+    p = subprocess.Popen(["git", "blame", "--line-porcelain", filename], bufsize=1, stdout=subprocess.PIPE,
+                         cwd=repo_path).stdout
+    lines = p.readlines()
+    p.close()
+    author, author_mail = None, None
+    for i in lines:
+        try:
+            s = i.strip().decode()
+            if s.startswith('author '):
+                author = s.split(' ', 1)[1]
+            elif s.startswith('author-mail '):
+                author_mail = s.split(' ', 1)[1][1:-1]
+                author_key = (author, author_mail)
+                if author_key not in authors:
+                    authors[author_key] = 0
+                authors[author_key] += 1
+        except UnicodeDecodeError:
+            continue
+    return authors
+
+
 def blame(repo):
     repo_path = get_clone_path(repo)
     blame_path = get_blame_path(repo)
@@ -30,25 +56,12 @@ def blame(repo):
     files = [i.decode().strip() for i in lines]
 
     authors = {}
-    for filename in files:
-        p = subprocess.Popen(["git", "blame", "--line-porcelain", filename], bufsize=1, stdout=subprocess.PIPE,
-                             cwd=repo_path).stdout
-        lines = p.readlines()
-        p.close()
-        author, author_mail = None, None
-        for i in lines:
-            try:
-                s = i.strip().decode()
-                if s.startswith('author '):
-                    author = s.split(' ', 1)[1]
-                elif s.startswith('author-mail '):
-                    author_mail = s.split(' ', 1)[1][1:-1]
-                    author_key = (author, author_mail)
-                    if author_key not in authors:
-                        authors[author_key] = 0
-                    authors[author_key] += 1
-            except UnicodeDecodeError:
-                continue
+    pool = Pool(5)
+    for file_authors in pool.map(blame_file, [(repo_path, f) for f in files]):
+        for author_key in file_authors:
+            if author_key not in authors:
+                authors[author_key] = 0
+            authors[author_key] += file_authors[author_key]
 
     with open(blame_path, 'w') as f:
         json.dump(sorted([{'author': i[0], 'email': i[1], 'lines': authors[i]} for i in authors],
