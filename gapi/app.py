@@ -1,6 +1,7 @@
 import re
 
 from flask import Flask, request
+from flask_cors import CORS
 from flask_restful import Resource, Api
 
 from gapi import check_repo, init_repo, is_repo_ready, file_log, blame
@@ -44,6 +45,8 @@ class Blame(Resource):
 
 api.add_resource(RepoInit, '/init/<path:repo>')
 api.add_resource(FileHistory, '/file/<path:repo>')
+
+CORS(app)
 
 if __name__ == '__main__':
     app.run(debug=True)
