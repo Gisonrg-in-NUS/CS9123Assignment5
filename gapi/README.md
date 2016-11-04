@@ -10,7 +10,7 @@ Response:
 
 Failures:
 
-```json
+```
 {'message': 'Not a valid GitHub repo.'}, 400
 ```
 
@@ -41,7 +41,7 @@ Response:
 
 Failures:
 
-```json
+```
 {'message': 'Not a valid GitHub repo.'}, 400
 {'message': 'Wait ah...'}, 202
 ```
@@ -66,7 +66,7 @@ Response:
 
 Failures:
 
-```json
+```
 {'message': 'Not a valid GitHub repo.'}, 400
 {'message': 'Wait ah...'}, 202
 ```
