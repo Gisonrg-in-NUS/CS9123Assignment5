@@ -16,7 +16,7 @@ Failures:
 
 ## File History
 
-GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins?file=BrowserLocator/BrowserLocator.csproj`
+GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins/BrowserLocator/BrowserLocator.csproj`
 
 Response:
 
@@ -48,7 +48,7 @@ Failures:
 
 ## File History (Line No.)
 
-GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins?file=BrowserLocator/BrowserLocator.csproj&lines=1,3`
+GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins/BrowserLocator/BrowserLocator.csproj?lines=1,3`
 
 Response:
 
