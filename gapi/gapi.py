@@ -22,6 +22,11 @@ def is_repo_ready(repo):
     return os.path.isfile(get_flag_path(repo))
 
 
+def has_file(repo, filename):
+    repo_path = get_clone_path(repo)
+    return os.path.isfile(os.path.join(repo_path, filename))
+
+
 def file_log(repo, filename, linenos):
     cmds = ["git", "log", '--format=%ct|%cN|%cE|%H|%s']
     if linenos:

@@ -4,7 +4,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from flask_restful import Resource, Api
 
-from gapi import check_repo, init_repo, is_repo_ready, file_log, blame
+from gapi import check_repo, init_repo, is_repo_ready, file_log, blame, has_file
 
 app = Flask(__name__)
 api = Api(app)
@@ -27,6 +27,8 @@ class FileHistory(Resource):
             return {'message': 'Not a valid GitHub repo.'}, 400
         if not is_repo_ready(repo):
             return {'message': 'Wait ah...'}, 202
+        if not has_file(repo, filename):
+            return {'message': 'File not found.'}, 404
         linenos = request.args.get('lines')
         if linenos:
             match = re.match("\A(\d+),(\d+)\Z", linenos)
