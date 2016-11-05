@@ -228,6 +228,10 @@
         this.shouldShowDetail = false;
       },
 
+      cleanUp: function() {
+        this.reset();
+      },
+
       addUserData: function(user, commits) {
         var self = this;
         var dateMap = {};

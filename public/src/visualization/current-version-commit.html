@@ -251,9 +251,12 @@
           polyline.exit()
                   .remove();
         };
-      }
+      },
 
-//      myFunctions:function(){}
+      cleanUp: function() {
+        $("#visualization-current-contribution > *").remove();
+        this.shouldShowTable = false;
+      },
     });
   </script>
 </dom-module>

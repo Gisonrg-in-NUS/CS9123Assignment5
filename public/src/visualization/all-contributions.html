@@ -81,6 +81,11 @@
         this._drawChart(user_data);
       },
 
+      cleanUp: function() {
+        this.hasSelectedMember = false;
+        $("#visualization-all-contribution > *").remove();
+      },
+
       _drawChart: function(data) {
         var self = this;
         var margin = {top: 40, right: 20, bottom: 200, left: 40},

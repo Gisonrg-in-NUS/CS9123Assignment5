@@ -302,9 +302,13 @@
           polyline.exit()
                   .remove();
         };
-      }
-
-//      myFunctions:function(){}
+      },
+      cleanUp: function() {
+        this.$$('paper-input[name=file]').value = '';
+        this.$$('paper-input[name=lines]').value = '';
+        $("#visualization-commit-history-by-files > *").remove();
+        this.shouldShowTable = false;
+      },
     });
   </script>
 </dom-module>

@@ -33,6 +33,8 @@
       <div>Fork:{{repo.forks_count}}</div>
       <paper-icon-button icon="code" spacer></paper-icon-button>
       <div>Language:{{repo.language}}</div>
+      <div class="flex"></div>
+      <paper-button on-tap="backToTop">Back</paper-button>
     </app-toolbar>
 
     <div class="container">
@@ -48,14 +50,12 @@
         </paper-dropdown-menu>
       </div>
 
-
       <iron-pages selected="{{selected}}">
         <all-contributions></all-contributions>
         <commit-history-by-users></commit-history-by-users>
         <commit-history-of-file></commit-history-of-file>
         <current-version-commit></current-version-commit>
       </iron-pages>
-
     </div>
   </template>
   <script>
@@ -124,6 +124,19 @@
           return 1;
         }
         return 0;
+      },
+
+      reset: function() {
+        this.$$('all-contributions').cleanUp();
+        this.$$('commit-history-by-users').cleanUp();
+        this.$$('commit-history-of-file').cleanUp();
+        this.$$('current-version-commit').cleanUp();
+      },
+
+      backToTop: function() {
+        this.reset();
+        this.selected = 0;
+        document.querySelector('git-guard-app').showRepoSelection();
       }
     });
   </script>
