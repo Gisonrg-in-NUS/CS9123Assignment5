@@ -78,12 +78,19 @@ def clone(repo):
         clone_path = get_clone_path(repo)
         if os.path.isfile(flag_path):
             os.remove(flag_path)
-            subprocess.run(["git", "pull"], cwd=clone_path)
+            p = subprocess.Popen(["git", "pull"], bufsize=1, stdout=subprocess.PIPE, cwd=clone_path).stdout
+            lines = p.readlines()
+            p.close()
+            should_blame = lines[0].decode().strip() != 'Already up-to-date.'
         else:
             subprocess.run(["git", "clone", url, clone_path])
+            should_blame = True
         touch_flag(flag_path)
-        print(repo, 'cloned / updated, counting blame')
-        blame(repo)
+        if should_blame:
+            print(repo, 'cloned / updated, counting blame')
+            blame(repo)
+        else:
+            print(repo, 'already updated, not running blame')
 
 
 if __name__ == '__main__':
