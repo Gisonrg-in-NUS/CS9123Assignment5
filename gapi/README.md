@@ -92,4 +92,5 @@ Failures:
 ```
 {'message': 'Not a valid GitHub repo.'}, 400
 {'message': 'Wait ah...'}, 202
+{'message': 'Repo cloned. But I am still counting...'}, 202
 ```
