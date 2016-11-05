@@ -28,7 +28,7 @@ def has_file(repo, filename):
 
 
 def file_log(repo, filename, linenos):
-    cmds = ["git", "log", '--format=%ct|%cN|%cE|%H|%s']
+    cmds = ["git", "log", '--format=%ct|%cN|%cE|%H|%s', '--no-patch']
     if linenos:
         cmds += ["-L", ":".join((linenos, filename))]
     else:
@@ -44,8 +44,6 @@ def file_log(repo, filename, linenos):
             groups = match.groups()
             result.append(
                 {'time': groups[0], 'author': groups[1], 'email': groups[2], 'commit': groups[3], 'message': groups[4]})
-        else:
-            break
     return result
 
 
