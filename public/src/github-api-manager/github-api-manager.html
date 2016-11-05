@@ -82,6 +82,10 @@
         }
         return $.get(url);
       },
+      getCurrentContribution: function(owner, repo) {
+        var url = 'https://cs9123a5.saki.sshz.org/blame/' + owner + '/' + repo;
+        return $.get(url);
+      },
       getWithPagination: function(url, page, cb) {
         var self = this;
         $.ajax({

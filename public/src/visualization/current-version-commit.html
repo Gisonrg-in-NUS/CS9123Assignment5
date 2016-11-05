@@ -1,0 +1,259 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="current-version-commit">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host{}
+       /* Element Own CSS Styles */
+      .container {
+        padding: 12px;
+      }
+      .chart-container {
+        margin-bottom: 15px;
+      }
+      .table-container {
+        margin-top: 12px;
+      }
+      [hidden] {
+        display:none;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <div class="container">
+      <paper-button on-tap="loadData" raised>Load Data</paper-button>
+      <div class="chart-container">
+        <svg id="visualization-current-contribution" width="960" height="450"></svg>
+      </div>
+
+      <div class="table-container" hidden$="{{!shouldShowTable}}">
+        <h4>Contribution Details</h4>
+        <paper-datatable data="{{contributions}}">
+          <paper-datatable-column header="Author" property="author" sortable>
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="Email" property="email">
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="Lines" property="lines" sortable>
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="%" property="percentage" sortable>
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+        </paper-datatable>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+
+      is: 'current-version-commit',
+
+      properties: {
+        data: {
+          observer: '_onDataChanged'
+        },
+        shouldShowTable: {
+          type: Boolean,
+          value: false
+        }
+      },
+
+      listeners: {},
+
+      ready:function(){},
+
+      attached:function(){},
+
+      loadData: function() {
+        var self = this;
+        document.querySelector('github-api-manager').getCurrentContribution(self.repoOwner, self.repoName).done(function(res, textStatus, xhr) {
+          if (xhr.status == 202) {
+            alert('Oops, the backend is still processing, please wait and try again');
+            return;
+          }
+          self.shouldShowTable = true;
+          self.data = res;
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+          console.error(errorThrown);
+        });
+      },
+
+      _onDataChanged: function(data) {
+        var self = this;
+        var totalLines = data.reduce(function(pre, cur) {
+          return pre + cur.lines;
+        }, 0);
+        data = data.map(function(d) {
+          d.percentage = Math.round(d.lines / totalLines * 10000) / 100;
+          return d;
+        });
+        self.contributions = data;
+        data = data.filter(function(d) {
+          return d.percentage > 5;
+        });
+        var domain = data.map(function(c) {
+          return c.email;
+        });
+        var colors = randomColor({
+          count: domain.length,
+          hue: 'blue'
+        });
+
+        $("#visualization-current-contribution > *").remove();
+        var svg = d3.select("#visualization-current-contribution")
+                .append("g")
+        svg.append("g")
+                .attr("class", "slices");
+        svg.append("g")
+                .attr("class", "labels");
+        svg.append("g")
+                .attr("class", "lines");
+        var width = 960,
+                height = 450,
+                radius = Math.min(width, height) / 2;
+        var pie = d3.pie()
+                .sort(null)
+                .value(function(d) {
+                  return d.lines;
+                });
+        var arc = d3.arc()
+                .outerRadius(radius * 0.8)
+                .innerRadius(radius * 0.4);
+
+        var outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9);
+
+        svg.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+        var key = function(d){ return d.data.email; };
+
+        var color = d3.scaleOrdinal()
+                .domain(domain)
+                .range(colors);
+
+        change(data);
+        change(data);
+
+        function change(data) {
+          var tip = d3.tip()
+                  .attr("class", "d3-tip")
+                  .offset([0, 0])
+                  .html(function(d) {
+                    var html = '';
+                    html += '<strong>'+ d.data.author + '</strong><br/>';
+                    html += d.data.lines + ' lines<br/>';
+                    html += '%: ' + d.data.percentage + '%';
+                    return html;
+                  });
+          svg.call(tip);
+
+          /* ------- PIE SLICES -------*/
+          var slice = svg
+                  .select(".slices")
+                  .selectAll("path.slice")
+                  .data(pie(data), key);
+
+          slice.enter()
+                  .insert("path")
+                  .style("fill", function(d) { return color(d.data.email); })
+                  .style("cursor", 'pointer')
+                  .attr("class", "slice")
+                  .on('mouseover', tip.show)
+                  .on('mouseout', tip.hide);
+
+          slice.transition().duration(1000)
+                  .attrTween("d", function(d) {
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      return arc(interpolate(t));
+                    };
+                  });
+
+          slice.exit()
+                  .remove();
+
+          /* ------- TEXT LABELS -------*/
+
+          var text = svg.select(".labels").selectAll("text")
+                  .data(pie(data), key);
+
+          text.enter()
+                  .append("text")
+                  .attr("dy", ".35em")
+                  .text(function(d) {
+                    return d.data.author + ' (' + d.data.percentage + '%)';
+                  });
+
+          function midAngle(d){
+            return d.startAngle + (d.endAngle - d.startAngle)/2;
+          }
+
+          text.transition().duration(1000)
+                  .attrTween("transform", function(d) {
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      var d2 = interpolate(t);
+                      var pos = outerArc.centroid(d2);
+                      pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
+                      return "translate("+ pos +")";
+                    };
+                  })
+                  .styleTween("text-anchor", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      var d2 = interpolate(t);
+                      return midAngle(d2) < Math.PI ? "start":"end";
+                    };
+                  });
+
+          text.exit()
+                  .remove();
+
+          /* ------- SLICE TO TEXT POLYLINES -------*/
+
+          var polyline = svg.select(".lines").selectAll("polyline")
+                  .data(pie(data), key);
+
+          polyline.enter()
+                  .append("polyline");
+
+          polyline.transition().duration(1000)
+                  .attrTween("points", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      var d2 = interpolate(t);
+                      var pos = outerArc.centroid(d2);
+                      pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+                      return [arc.centroid(d2), outerArc.centroid(d2), pos];
+                    };
+                  });
+
+          polyline.exit()
+                  .remove();
+        };
+      }
+
+//      myFunctions:function(){}
+    });
+  </script>
+</dom-module>

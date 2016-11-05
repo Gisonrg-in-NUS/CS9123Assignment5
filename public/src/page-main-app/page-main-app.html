@@ -53,7 +53,7 @@
         <all-contributions></all-contributions>
         <commit-history-by-users></commit-history-by-users>
         <commit-history-of-file></commit-history-of-file>
-        <!--<commit-history-by-users></commit-history-by-users>-->
+        <current-version-commit></current-version-commit>
       </iron-pages>
 
     </div>
@@ -85,6 +85,8 @@
         var repoOwner = repo.owner.login;
         var repoName = repo.name;
         this._handleAllContributors(repoOwner, repoName);
+        this.$$('current-version-commit').repoOwner = repoOwner;
+        this.$$('current-version-commit').repoName = repoName;
         this.$$('commit-history-by-users').repoCreatedDate = moment(repo.created_at).toDate();
         this.$$('commit-history-by-users').sinceDate = moment(repo.created_at).toDate();
         this.$$('commit-history-by-users').untilDate = new Date();
