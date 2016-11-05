@@ -56,7 +56,7 @@ def blame(repo):
     files = [i.decode().strip() for i in lines]
 
     authors = {}
-    pool = Pool(5)
+    pool = Pool(2)
     for file_authors in pool.map(blame_file, [(repo_path, f) for f in files]):
         for author_key in file_authors:
             if author_key not in authors:
