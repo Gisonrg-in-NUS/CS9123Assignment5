@@ -15,6 +15,12 @@
       .container {
         padding: 8px 4px;
       }
+      .menu-container {
+        padding: 8px 10px;
+      }
+      .dropdown-menu {
+        width: 250px;
+      }
     </style>
 
     <!-- HTML Contents -->
@@ -30,7 +36,26 @@
     </app-toolbar>
 
     <div class="container">
-      <all-contributions></all-contributions>
+      <div class="menu-container">
+        Visualization:
+        <paper-dropdown-menu class="dropdown-menu">
+          <paper-listbox class="dropdown-content" selected="{{selected}}">
+            <paper-item>All Contributions</paper-item>
+            <paper-item>Commit History By Users</paper-item>
+            <paper-item>Commit History For Files</paper-item>
+            <paper-item>Current Version Contribution</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+      </div>
+
+
+      <iron-pages selected="{{selected}}">
+        <all-contributions></all-contributions>
+        <commit-history-by-users></commit-history-by-users>
+        <!--<commit-history-by-users></commit-history-by-users>-->
+        <!--<commit-history-by-users></commit-history-by-users>-->
+      </iron-pages>
+
     </div>
   </template>
   <script>
@@ -39,6 +64,10 @@
       is: 'page-main-app',
 
       properties: {
+        selected: {
+          type: String,
+          value: 0
+        },
         repo: {
           type: Object,
           observer: '_repoChanged'
@@ -52,22 +81,44 @@
       attached:function(){},
 
       _repoChanged: function(repo) {
+        console.log(repo);
         var repoOwner = repo.owner.login;
         var repoName = repo.name;
         this._handleAllContributors(repoOwner, repoName);
+        this.$$('commit-history-by-users').repoCreatedDate = moment(repo.created_at).toDate();
+        this.$$('commit-history-by-users').sinceDate = moment(repo.created_at).toDate();
+        this.$$('commit-history-by-users').untilDate = new Date();
       },
 
-      _handleAllContributors: function(user, repo) {
+      _handleAllContributors: function(owner, repo) {
         var self = this;
-        document.querySelector('github-api-manager').getAllContributors(user, repo).done(function(res) {
+        document.querySelector('github-api-manager').getAllContributors(owner, repo).done(function(res) {
           self.$$('all-contributions').data = res;
+          // Get all user names
+          var members = res.map(function(o) {
+            return o.author;
+          });
+          members.sort(self.__sortMemberByName);
+          self.$$('commit-history-by-users').users = members;
+          self.$$('commit-history-by-users').repoOwner = owner;
+          self.$$('commit-history-by-users').repoName = repo;
         }).fail(function(jqXHR, textStatus, errorThrown) {
           alert(errorThrown);
           console.error(errorThrown);
         });
-      }
+      },
 
-//      myFunctions:function(){}
+      __sortMemberByName: function(a, b) {
+        var nameA = a.login.toUpperCase(); // ignore upper and lowercase
+        var nameB = b.login.toUpperCase(); // ignore upper and lowercase
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        return 0;
+      }
     });
   </script>
 </dom-module>

@@ -47,6 +47,55 @@
             Authorization: 'token ' + self.access_token
           }
         });
+      },
+      getAllCommits: function(owner, repo, opts) {
+        var self = this;
+        var opts = opts || {};
+        var author = opts.author || '';
+        var since = opts.since || '';
+        var until = opts.until || '';
+        var until = opts.until || '';
+        var endPoint = 'https://api.github.com/repos/' + owner + '/' + repo + '/commits?';
+        var query = 'author=' + author;
+        if (since) {
+          query += '&since=' + since;
+        }
+        if (until) {
+          query += '&until=' + until
+        }
+        query += '&per_page=100';
+        return $.ajax({
+          url: endPoint + query,
+          dataType: 'json',
+          headers: {
+            Authorization: 'token ' + self.access_token
+          }
+        });
+      },
+      getWithPagination: function(url, page, cb) {
+        var self = this;
+        $.ajax({
+          url: url + '&page=' + page,
+          dataType: 'json',
+          headers: {
+            Authorization: 'token ' + self.access_token
+          }
+        }).done(function(res) {
+          cb(null, res);
+        }).catch(function(err) {
+          cb(err);
+        });
+      },
+      parsePagination: function(linkStr) {
+        return linkStr.split(',').map(function(rel) {
+          return rel.split(';').map(function(curr, idx) {
+            if (idx === 0) return /(&|\?)page=(\d+)/.exec(curr)[2];
+            if (idx === 1) return /rel="(.+)"/.exec(curr)[1];
+          })
+        }).reduce(function(obj, curr, i) {
+          obj[curr[1]] = curr[0];
+          return obj;
+        }, {});
       }
     });
   </script>

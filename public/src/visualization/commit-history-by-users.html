@@ -1,0 +1,388 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="commit-history-by-users">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning paper-date-picker-dialog-style" type="text/css">
+      :host{}
+       /* Element Own CSS Styles */
+      .dropdown-content .iron-selected {
+        color: red;
+      }
+      .container, .commit-details {
+        padding: 12px;
+      }
+      .query-form {
+        align-items: center;
+        text-align: center;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <div class="container">
+      <div class="query-form layout horizontal">
+        <div class="flex">
+          <strong>User(s):</strong>
+          <span>{{_count(selectedUsers)}} selected</span>
+          <paper-menu-button ignore-select on-paper-dropdown-close="onSelectedUsers">
+            <paper-icon-button icon="face" class="dropdown-trigger"></paper-icon-button>
+            <paper-menu class="dropdown-content user-selection" multi>
+              <template is="dom-repeat" items="{{users}}">
+                <paper-item>{{item.login}}</paper-item>
+              </template>
+            </paper-menu>
+          </paper-menu-button>
+        </div>
+        <div class="flex">
+          <strong>Since:</strong>
+          <span>{{dateFormat(sinceDate)}}</span>
+          <paper-icon-button icon="date-range" on-tap="showDialog" date-type="since"></paper-icon-button>
+        </div>
+        <div class="flex">
+          <strong>Until:</strong>
+          <span>{{dateFormat(untilDate)}}</span>
+          <paper-icon-button icon="date-range" on-tap="showDialog" date-type="until"></paper-icon-button>
+        </div>
+        <div class="flex">
+          <paper-button raised on-tap="reset">Reset</paper-button>
+          <paper-button raised on-tap="update">Update</paper-button>
+        </div>
+      </div>
+    </div>
+
+    <paper-dialog id="pickerDialog" class="paper-date-picker-dialog dialog" on-iron-overlay-closed="dismissDialog">
+      <paper-date-picker id="picker" date="{{selectedDate}}"></paper-date-picker>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm>OK</paper-button>
+      </div>
+    </paper-dialog>
+
+    <div>
+      <svg id="svg-commit-history" width="1000" height="600"></svg>
+    </div>
+
+    <div class="commit-details">
+      <div>
+        Selected Commit Details
+      </div>
+      <div class="commits-container" role="listbox">
+        <template is="dom-repeat" items$="{{commitDetails}}">
+          <paper-item>
+            <a href$="{{item.html_url}}" target="_blank">{{item.commit.message}}</a>
+          </paper-item>
+        </template>
+      </div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+
+      is: 'commit-history-by-users',
+
+      properties: {
+        selectedUsers: {
+          type: Array,
+          value: []
+        },
+        sinceDate: {
+          type: Date,
+          value: ''
+        },
+        untilDate: {
+          type: Date,
+          value: ''
+        },
+        userData: {
+          value: []
+        }
+      },
+
+      listeners: {},
+
+      ready:function(){
+      },
+
+      _handleAllCommits: function(owner, repo) {
+        var self = this;
+        document.querySelector('github-api-manager').getCommits(owner, repo).done(function(res) {
+          self.$$('all-contributions').data = res;
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          alert(errorThrown);
+          console.error(errorThrown);
+        });
+      },
+
+      showDialog: function(event) {
+        var target = event.target;
+        while (!target.hasAttribute('date-type')) {
+          target = target.parentNode;
+        }
+        var type = target.getAttribute('date-type');
+        this.$.pickerDialog.setAttribute('date-type', type);
+        this.selectedDate = type == 'since' ? this.sinceDate : this.untilDate;
+        this.$.pickerDialog.toggle();
+      },
+
+      dismissDialog: function(event) {
+        if (event.detail.confirmed) {
+          console.log(this.selectedDate)
+          var date = this.$.picker.date;
+          var type = this.$.pickerDialog.getAttribute('date-type');
+          if (type == 'since') {
+            this.sinceDate = date;
+          } else {
+            this.untilDate = date;
+          }
+        }
+      },
+
+      onSelectedUsers: function() {
+        var self = this;
+        var selectedUsers = [];
+        var selected = this.$$('.user-selection').selectedValues || [];
+        selected.map(function(n) {
+          selectedUsers.push(self.users[n]);
+        });
+        this.selectedUsers = selectedUsers;
+      },
+
+      dateFormat: function(date) {
+        if (date) {
+          return moment(date).format('LL');
+        } else {
+          return 'Not Selected';
+        }
+      },
+
+      _today: function() {
+        return Date();
+      },
+
+      _count: function(array) {
+        if (array) {
+          return array.length;
+        }
+      },
+
+      update: function() {
+        var self = this;
+        self.userData = [];
+        $("#svg-commit-history > *").remove();
+        var apiManager = document.querySelector('github-api-manager');
+        this.selectedUsers.forEach(function(u) {
+          var opts = {
+            author: u.login
+          }
+          opts.since = self.sinceDate ? (moment(self.sinceDate).utc().format('YYYY-MM-DDT00:00:00') + "Z") : '';
+          opts.until = self.untilDate ? (moment(self.untilDate).utc().format('YYYY-MM-DDT23:59:59') + "Z") : '';
+          apiManager.getAllCommits(self.repoOwner, self.repoName, opts)
+            .done(function(res, textStatus, jqXHR) {
+              var pageLink = jqXHR.getResponseHeader('Link');
+              if (pageLink) {
+                var links = apiManager.parsePagination(pageLink);
+                var requestQueue = [];
+                var from = Number.parseInt(links.next);
+                var to = Number.parseInt(links.last);
+                var url = this.url;
+                for (var i=from;i<=to;i++) {
+                  (function() {
+                    var index = i;
+                    requestQueue.push((function(cb) {
+                      apiManager.getWithPagination(url, index, cb);
+                    }));
+                  })();
+                }
+                async.parallel(requestQueue, function(err, results) {
+                  if (err) {
+                   return console.error(err);
+                  }
+                  var final = [].concat.apply(res, results);
+                  self.addUserData(u.login, final);
+                });
+              } else {
+                self.addUserData(u.login, res);
+              }
+            });
+        });
+      },
+
+      reset: function() {
+        $("#svg-commit-history > *").remove();
+        this.sinceDate = this.repoCreatedDate;
+        this.untilDate = new Date();
+        this.selectedUsers = [];
+        this.$$('.user-selection').selectedValues = [];
+        this.userData = [];
+//        this.draw();
+      },
+
+      addUserData: function(user, commits) {
+        var self = this;
+        var dateMap = {};
+        self.chartConfig = self.chartConfig || {};
+        commits.forEach(function(c) {
+          var time = moment(c.commit.committer.date).format('YMMDD');
+          dateMap[time] = dateMap[time] || [];
+          dateMap[time].push(c);
+        });
+        var dataArr = [];
+        $.each(dateMap, function(k, v) {
+          dataArr.push({
+            date: k,
+            commits: v
+          });
+        });
+        this.userData.push({
+          user: user,
+          commits: commits,
+          commitsByDate: dataArr
+        });
+        if (this.userData.length == this.selectedUsers.length) {
+          this.draw();
+        }
+      },
+
+      draw: function() {
+        var topScope = this;
+        var svg = d3.select("#svg-commit-history"),
+                margin = {top: 20, right: 50, bottom: 30, left: 50},
+                width = svg.attr("width") - margin.left - margin.right,
+                height = svg.attr("height") - margin.top - margin.bottom,
+                g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var parseTime = d3.timeParse("%Y%m%d");
+
+        var x = d3.scaleTime().range([0, width]),
+                y = d3.scaleLinear().range([height, 0]),
+                z = d3.scaleOrdinal(d3.schemeCategory10);
+
+        var line = d3.line()
+//                .curve(d3.curveBasis)
+                .x(function(d) { return x(parseTime(d.date)); })
+                .y(function(d) { return y(d.commits.length); });
+
+        var xMap = function(d) { return x(parseTime(d.date)); }; // data -> display
+        var yMap = function(d) { return y(d.values); }; // data -> display
+
+        function transform(d) {
+          return "translate(" + x(parseTime(d.date)) + "," + y(d.values) + ")";
+        }
+
+        (function(allCommits) {
+          var maxCommit = 0;
+          var normalizedData = [];
+          allCommits.forEach(function(p) {
+            p.commitsByDate.forEach(function(d) {
+              normalizedData.push({
+                user: p.user,
+                date: d.date,
+                values: d.commits.length,
+                data: d.commits
+              });
+            })
+          })
+
+          x.domain([topScope.sinceDate, topScope.untilDate]);
+          y.domain([
+            0,
+            d3.max(allCommits, function(c) { return d3.max(c.commitsByDate, function(d) { return d.commits.length; }); })
+          ]);
+
+          z.domain(allCommits.map(function(c) { return c.user; }));
+
+          var xAxis = d3.axisBottom(x);
+          var yAxis = d3.axisLeft(y).ticks(3).tickFormat(d3.format("d"));
+
+          var zoom = d3.zoom()
+              .scaleExtent([1, 80])
+              .on("zoom", zoomed);
+
+          var gX = g.append("g")
+                  .attr("class", "axis axis--x")
+                  .attr("transform", "translate(0," + height + ")")
+                  .call(xAxis);
+
+          var gY = g.append("g")
+                  .attr("class", "axis axis--y")
+                  .call(yAxis);
+
+          gY.append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", "0.71em")
+          .attr("fill", "#000")
+          .text("Commits");
+
+          var tip = d3.tip()
+                  .attr("class", "d3-tip")
+                  .offset([-10, 0])
+                  .html(function(d) {
+                    var html = '';
+                    html += '<strong>'+ d.user + '</strong><br/>';
+                    html += moment(d.date).format('LL') + '<br/>';
+                    html += d.values + 'commit(s)<br/>';
+                    return html;
+                  });
+          svg.call(tip);
+
+          g.selectAll(".dot")
+                  .data(normalizedData)
+                  .enter().append("circle")
+                  .attr("class", "dot")
+                  .attr("r", 1.4)
+                  .attr("cx", xMap)
+                  .attr("cy", yMap)
+                  .style("fill", function(d) {
+                    return z(d.user);
+                  })
+                  .style("cursor", "pointer")
+                  .on("mouseover", tip.show)
+                  .on("mouseout", tip.hide)
+                  .on("click", function(d) {
+                    topScope.showCommitDetails(d);
+                    d3.event.stopPropagation();
+                  });;
+
+          function zoomed() {
+            gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
+            gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+
+            svg.selectAll(".dot")
+                    .attr("transform", d3.event.transform);
+          }
+
+          svg.call(zoom);
+
+          var legend = svg.selectAll(".legend")
+                  .data(topScope.selectedUsers)
+                  .enter().append("g")
+                  .classed("legend", true)
+                  .attr("transform", function(d, i) { return "translate(0," + (20 + i * 20) + ")"; });
+
+          legend.append("circle")
+                  .attr("r", 3.5)
+                  .attr("cx", width)
+                  .attr("fill", function(d) {
+                    return z(d.login);
+                  });
+
+          legend.append("text")
+                  .attr("x", width + 5)
+                  .attr("dy", ".35em")
+                  .text(function(d) { return d.login; });
+        })(this.userData);
+
+        function type(d, _, columns) {
+          d.date = parseTime(d.date);
+          for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
+          return d;
+        }
+      },
+
+      showCommitDetails: function(data) {
+        this.commitDetails = data.data;
+      }
+    });
+  </script>
+</dom-module>

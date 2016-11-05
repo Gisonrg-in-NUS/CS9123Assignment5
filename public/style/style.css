@@ -9,6 +9,7 @@ app-header {
     color: #fff;
 }
 
+/*Visual 1*/
 .axis path,
 .axis line {
     fill: none;
@@ -56,4 +57,16 @@ app-header {
     margin: -1px 0 0 0;
     top: 100%;
     left: 0;
+}
+
+
+/*Visual 2*/
+.axis--x path {
+    display: none;
+}
+
+.line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
 }
