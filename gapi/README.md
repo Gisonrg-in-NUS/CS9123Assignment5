@@ -44,6 +44,7 @@ Failures:
 ```
 {'message': 'Not a valid GitHub repo.'}, 400
 {'message': 'Wait ah...'}, 202
+{"message": "File not found."}, 404
 ```
 
 ## File History (Line No.)
@@ -69,6 +70,7 @@ Failures:
 ```
 {'message': 'Not a valid GitHub repo.'}, 400
 {'message': 'Wait ah...'}, 202
+{"message": "File not found."}, 404
 ```
 
 ## Line Count in Final Project
