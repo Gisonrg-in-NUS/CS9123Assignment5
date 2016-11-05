@@ -24,7 +24,7 @@ def touch_flag(flag_path):
 
 def blame_file(args):
     repo_path, filename = args
-    
+
     authors = {}
     p = subprocess.Popen(["git", "blame", "--line-porcelain", filename], bufsize=1, stdout=subprocess.PIPE,
                          cwd=repo_path).stdout
@@ -56,7 +56,7 @@ def blame(repo):
     files = [i.decode().strip() for i in lines]
 
     authors = {}
-    pool = Pool(5)
+    pool = Pool(2)
     for file_authors in pool.map(blame_file, [(repo_path, f) for f in files]):
         for author_key in file_authors:
             if author_key not in authors:
@@ -65,7 +65,7 @@ def blame(repo):
 
     with open(blame_path, 'w') as f:
         json.dump(sorted([{'author': i[0], 'email': i[1], 'lines': authors[i]} for i in authors],
-                         key=lambda x: x['lines']), f)
+                         key=lambda x: -x['lines']), f)
 
 
 def clone(repo):
@@ -81,8 +81,9 @@ def clone(repo):
             subprocess.run(["git", "pull"], cwd=clone_path)
         else:
             subprocess.run(["git", "clone", url, clone_path])
-        blame(repo)
         touch_flag(flag_path)
+        print(repo, 'cloned / updated, counting blame')
+        blame(repo)
 
 
 if __name__ == '__main__':
