@@ -45,7 +45,7 @@ class Blame(Resource):
         if not is_repo_ready(repo):
             return {'message': 'Wait ah...'}, 202
         data = blame(repo)
-        return data if data else {'message': 'Repo cloned. But I am still counting...'}, 202
+        return data if data else ({'message': 'Repo cloned. But I am still counting...'}, 202)
 
 
 api.add_resource(RepoInit, '/init/<user>/<repo>')
