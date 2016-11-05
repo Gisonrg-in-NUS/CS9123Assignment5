@@ -15,6 +15,10 @@
         align-items: center;
         text-align: center;
       }
+
+      [hidden] {
+        display: none;
+      }
     </style>
 
     <!-- HTML Contents -->
@@ -61,7 +65,7 @@
       <svg id="svg-commit-history" width="1000" height="600"></svg>
     </div>
 
-    <div class="commit-details">
+    <div class="commit-details" hidden$="{{!shouldShowDetail}}">
       <div>
         Selected Commit Details
       </div>
@@ -95,6 +99,10 @@
         },
         userData: {
           value: []
+        },
+        shouldShowDetail: {
+          type: Boolean,
+          value: false
         }
       },
 
@@ -168,6 +176,8 @@
       update: function() {
         var self = this;
         self.userData = [];
+        self.shouldShowDetail = false;
+        self.commitDetails = [];
         $("#svg-commit-history > *").remove();
         var apiManager = document.querySelector('github-api-manager');
         this.selectedUsers.forEach(function(u) {
@@ -214,7 +224,8 @@
         this.selectedUsers = [];
         this.$$('.user-selection').selectedValues = [];
         this.userData = [];
-//        this.draw();
+        this.commitDetails = [];
+        this.shouldShowDetail = false;
       },
 
       addUserData: function(user, commits) {
@@ -382,6 +393,7 @@
 
       showCommitDetails: function(data) {
         this.commitDetails = data.data;
+        this.shouldShowDetail = true;
       }
     });
   </script>

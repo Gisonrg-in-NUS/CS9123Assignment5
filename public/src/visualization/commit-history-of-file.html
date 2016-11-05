@@ -14,6 +14,9 @@
       .table-container {
         margin-top: 12px;
       }
+      [hidden] {
+        display:none;
+      }
     </style>
 
     <!-- HTML Contents -->
@@ -27,7 +30,7 @@
         <svg id="visualization-commit-history-by-files" width="960" height="450"></svg>
       </div>
 
-      <div class="table-container">
+      <div class="table-container" hidden$="{{!shouldShowTable}}">
         <h4>Showing commits for {{selectedCommitAuthor}}</h4>
         <div>
           <paper-button raised on-tap="resetSelected">Reset Selected</paper-button>
@@ -67,7 +70,12 @@
 
       is: 'commit-history-of-file',
 
-      properties: {},
+      properties: {
+        shouldShowTable: {
+          type: Boolean,
+          value: false
+        }
+      },
 
       listeners: {},
 
@@ -92,10 +100,15 @@
           return;
         }
         var self = this;
-        document.querySelector('github-api-manager').getCommitsByFile(this.repoOwner, this.repoName, fileName, lines).done(function(res) {
+        document.querySelector('github-api-manager').getCommitsByFile(this.repoOwner, this.repoName, fileName, lines).done(function(res, textStatus, xhr) {
+          if (xhr.status == 202) {
+            alert('Oops, the backend is still processing, please wait and try again');
+            return;
+          }
           self.selectedCommitData = res;
           self.allCommitData = res;
           self.selectedCommitAuthor = 'All';
+          self.shouldShowTable = true;
           self.draw(res);
         }).fail(function(jQHX, text) {
           alert(text);
