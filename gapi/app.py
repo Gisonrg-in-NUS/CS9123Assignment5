@@ -11,7 +11,8 @@ api = Api(app)
 
 
 class RepoInit(Resource):
-    def get(self, repo):
+    def get(self, user, repo):
+        repo = '/'.join((user, repo))
         if check_repo(repo):
             init_repo(repo)
             return {'message': 'OK. Come back later.', 'repo': repo}
@@ -20,12 +21,12 @@ class RepoInit(Resource):
 
 
 class FileHistory(Resource):
-    def get(self, repo):
+    def get(self, user, repo, filename):
+        repo = '/'.join((user, repo))
         if not check_repo(repo):
             return {'message': 'Not a valid GitHub repo.'}, 400
         if not is_repo_ready(repo):
             return {'message': 'Wait ah...'}, 202
-        filename = request.args['file']
         linenos = request.args.get('lines')
         if linenos:
             match = re.match("\A(\d+),(\d+)\Z", linenos)
@@ -35,7 +36,8 @@ class FileHistory(Resource):
 
 
 class Blame(Resource):
-    def get(self, repo):
+    def get(self, user, repo):
+        repo = '/'.join((user, repo))
         if not check_repo(repo):
             return {'message': 'Not a valid GitHub repo.'}, 400
         if not is_repo_ready(repo):
@@ -43,8 +45,9 @@ class Blame(Resource):
         return blame(repo)
 
 
-api.add_resource(RepoInit, '/init/<path:repo>')
-api.add_resource(FileHistory, '/file/<path:repo>')
+api.add_resource(RepoInit, '/init/<user>/<repo>')
+api.add_resource(FileHistory, '/file/<user>/<repo>/<path:filename>')
+api.add_resource(Blame, '/blame/<user>/<repo>')
 
 CORS(app)
 

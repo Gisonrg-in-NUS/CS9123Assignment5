@@ -16,7 +16,7 @@ Failures:
 
 ## File History
 
-GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins?file=BrowserLocator/BrowserLocator.csproj`
+GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins/BrowserLocator/BrowserLocator.csproj`
 
 Response:
 
@@ -48,7 +48,7 @@ Failures:
 
 ## File History (Line No.)
 
-GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins?file=BrowserLocator/BrowserLocator.csproj&lines=1,3`
+GET: `https://cs9123a5.saki.sshz.org/file/CNA-Bld/EOPlugins/BrowserLocator/BrowserLocator.csproj?lines=1,3`
 
 Response:
 
@@ -60,6 +60,29 @@ Response:
         "email": "cna.bld@gmail.com",
         "message": "Implement BrowserLocator",
         "time": "1467437978"
+    }
+]
+```
+
+Failures:
+
+```
+{'message': 'Not a valid GitHub repo.'}, 400
+{'message': 'Wait ah...'}, 202
+```
+
+## Line Count in Final Project
+
+GET: `https://cs9123a5.saki.sshz.org/blame/CNA-Bld/EOPlugins`
+
+Response:
+
+```json
+[
+    {
+        "author": "CNA-Bld",
+        "email": "cna.bld@gmail.com",
+        "lines": 24308
     }
 ]
 ```
