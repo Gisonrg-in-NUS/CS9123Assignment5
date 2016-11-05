@@ -44,7 +44,8 @@ class Blame(Resource):
             return {'message': 'Not a valid GitHub repo.'}, 400
         if not is_repo_ready(repo):
             return {'message': 'Wait ah...'}, 202
-        return blame(repo)
+        data = blame(repo)
+        return data if data else {'message': 'Repo cloned. But I am still counting...'}, 202
 
 
 api.add_resource(RepoInit, '/init/<user>/<repo>')

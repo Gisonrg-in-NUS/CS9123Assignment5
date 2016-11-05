@@ -51,5 +51,7 @@ def file_log(repo, filename, linenos):
 
 def blame(repo):
     blame_path = get_blame_path(repo)
-    with open(blame_path, 'r') as f:
-        return json.load(f)
+    if os.path.isfile(blame_path):
+        with open(blame_path, 'r') as f:
+            return json.load(f)
+    return None
