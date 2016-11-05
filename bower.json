@@ -28,6 +28,13 @@
     "paper-dialog": "PolymerElements/paper-dialog#~1.1.0",
     "moment": "~2.15.2",
     "paper-menu-button": "PolymerElements/paper-menu-button#~1.5.2",
-    "async": "~2.1.2"
+    "async": "~2.1.2",
+    "paper-datatable": "~0.9.8"
+  },
+  "resolutions": {
+    "polymer": "^1.2.0",
+    "paper-styles": "^1.0.0",
+    "paper-item": "~1.2.1",
+    "paper-icon-button": "~1.1.3"
   }
 }

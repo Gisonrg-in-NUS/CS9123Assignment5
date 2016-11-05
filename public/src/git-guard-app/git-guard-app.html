@@ -51,12 +51,17 @@
 
       checkoutRepo: function(user, repo) {
         var self = this;
-        document.querySelector('github-api-manager').getRepo(user, repo).done(function(res) {
+        var apiManager = document.querySelector('github-api-manager');
+        apiManager.getRepo(user, repo).done(function(res) {
           self.selected = 1;
           self.title = res.full_name;
           self.$$('page-main-app').repo = res;
         }).fail(function(jqXHR, textStatus, errorThrown) {
-          alert(errorThrown);
+          console.error(errorThrown);
+        });
+        apiManager.initRepo(user, repo).done(function(res) {
+          console.log(res);
+        }).fail(function(jqXHR, textStatus, errorThrown) {
           console.error(errorThrown);
         });
       }

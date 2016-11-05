@@ -1,0 +1,297 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="commit-history-of-file">
+  <template>
+    <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
+      :host{}
+       /* Element Own CSS Styles */
+      .container {
+        padding: 12px;
+      }
+      .chart-container {
+        margin-bottom: 15px;
+      }
+      .table-container {
+        margin-top: 12px;
+      }
+    </style>
+
+    <!-- HTML Contents -->
+    <div class="container">
+      <div class="input-form">
+        <paper-input name="file" label="File Path e.g. README.md" required></paper-input>
+        <paper-input name="lines" label="Lines (optional) e.g. 1,10" error-message="Please check your input"></paper-input>
+        <paper-button raised on-tap="update">Update</paper-button>
+      </div>
+      <div class="chart-container">
+        <svg id="visualization-commit-history-by-files" width="960" height="450"></svg>
+      </div>
+
+      <div class="table-container">
+        <h4>Showing commits for {{selectedCommitAuthor}}</h4>
+        <div>
+          <paper-button raised on-tap="resetSelected">Reset Selected</paper-button>
+        </div>
+        <paper-datatable data="{{selectedCommitData}}">
+          <paper-datatable-column header="Date" property="time" sortable>
+            <template>
+              <span>{{_formatDate(value)}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="Message" property="message">
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="Author" property="author">
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="Email" property="email">
+            <template>
+              <span>{{value}}</span>
+            </template>
+          </paper-datatable-column>
+          <paper-datatable-column header="Link" property="commit" on-cell-tap="_openLink">
+            <template>
+              <paper-icon-button src="../../images/github.png"></paper-icon-button>
+            </template>
+          </paper-datatable-column>
+        </paper-datatable>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+
+      is: 'commit-history-of-file',
+
+      properties: {},
+
+      listeners: {},
+
+      ready:function(){
+        this.$$('paper-input[name=file]').addEventListener('input', function (e) {
+          e.target.invalid = false;
+          e.preventDefault();
+        });
+        this.$$('paper-input[name=lines]').addEventListener('input', function (e) {
+          e.target.invalid = false;
+          e.preventDefault();
+        });
+      },
+
+      attached:function(){},
+
+      update: function() {
+        var fileName = this.$$('paper-input[name=file]').value.trim();
+        var lines = this.$$('paper-input[name=lines]').value.trim();
+        if (!fileName) {
+          this.$$('paper-input[name=file]').invalid = true;
+          return;
+        }
+        var self = this;
+        document.querySelector('github-api-manager').getCommitsByFile(this.repoOwner, this.repoName, fileName, lines).done(function(res) {
+          self.selectedCommitData = res;
+          self.allCommitData = res;
+          self.selectedCommitAuthor = 'All';
+          self.draw(res);
+        }).fail(function(jQHX, text) {
+          alert(text);
+        });
+      },
+
+      resetSelected: function() {
+        this.selectedCommitData = this.allCommitData;
+        this.selectedCommitAuthor = 'All';
+      },
+
+      _formatDate: function(unixTime) {
+        return moment(new Date(+unixTime * 1000)).format('LL');
+      },
+
+      _openLink: function(event) {
+        window.open('https://github.com/' + this.repoOwner + '/' + this.repoName + '/commit/' + event.detail.item.commit, '_blank');
+      },
+
+      draw: function(data) {
+        var self = this;
+        var mapByName = {};
+        var mapByEmail = {};
+        var count = data.length;
+        data.forEach(function(c) {
+          mapByName[c.email] = mapByName[c.email] || [];
+          mapByName[c.email].push(c);
+          mapByEmail[c.email] = c.author;
+        });
+        var commits = [];
+        $.each(mapByName, function(k, v) {
+          commits.push({
+            email: k,
+            value: v.length,
+            display: mapByEmail[k],
+            data: v,
+            percentage: Math.round(v.length / count * 1000) / 10
+          });
+        });
+        var domain = commits.map(function(c) {
+          return c.email;
+        });
+        var colors = randomColor({
+          count: domain.length,
+          hue: 'blue'
+        });
+
+        $("#visualization-commit-history-by-files > *").remove();
+        var svg = d3.select("#visualization-commit-history-by-files")
+                .append("g")
+        svg.append("g")
+                .attr("class", "slices");
+        svg.append("g")
+                .attr("class", "labels");
+        svg.append("g")
+                .attr("class", "lines");
+        var width = 960,
+                height = 450,
+                radius = Math.min(width, height) / 2;
+        var pie = d3.pie()
+                .sort(null)
+                .value(function(d) {
+                  return d.value;
+                });
+        var arc = d3.arc()
+                .outerRadius(radius * 0.8)
+                .innerRadius(radius * 0.4);
+
+        var outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9);
+
+        svg.attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+        var key = function(d){ return d.data.email; };
+
+        var color = d3.scaleOrdinal()
+                .domain(domain)
+                .range(colors);
+
+        change(commits);
+        change(commits);
+
+        function change(data) {
+          var tip = d3.tip()
+                  .attr("class", "d3-tip")
+                  .offset([0, 0])
+                  .html(function(d) {
+                    var html = '';
+                    html += '<strong>'+ d.data.display + '</strong><br/>';
+                    html += 'Commits: ' + d.data.value + '<br/>';
+                    html += '%: ' + d.data.percentage + '%';
+                    return html;
+                  });
+          svg.call(tip);
+
+          /* ------- PIE SLICES -------*/
+          var slice = svg
+                  .select(".slices")
+                  .selectAll("path.slice")
+                  .data(pie(data), key);
+
+          slice.enter()
+                  .insert("path")
+                  .style("fill", function(d) { return color(d.data.email); })
+                  .style("cursor", 'pointer')
+                  .attr("class", "slice")
+                  .on('mouseover', tip.show)
+                  .on('mouseout', tip.hide)
+                  .on("click", function(d) {
+                    self.selectedCommitData = d.data.data;
+                    self.selectedCommitAuthor = d.data.display;
+                    d3.event.stopPropagation();
+                  });
+
+          slice.transition().duration(1000)
+                  .attrTween("d", function(d) {
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      return arc(interpolate(t));
+                    };
+                  });
+
+          slice.exit()
+                  .remove();
+
+          /* ------- TEXT LABELS -------*/
+
+          var text = svg.select(".labels").selectAll("text")
+                  .data(pie(data), key);
+
+          text.enter()
+                  .append("text")
+                  .attr("dy", ".35em")
+                  .text(function(d) {
+                    return d.data.display + ' (' + d.data.value + ' commit)';
+                  });
+
+          function midAngle(d){
+            return d.startAngle + (d.endAngle - d.startAngle)/2;
+          }
+
+          text.transition().duration(1000)
+                  .attrTween("transform", function(d) {
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      var d2 = interpolate(t);
+                      var pos = outerArc.centroid(d2);
+                      pos[0] = radius * (midAngle(d2) < Math.PI ? 1 : -1);
+                      return "translate("+ pos +")";
+                    };
+                  })
+                  .styleTween("text-anchor", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      var d2 = interpolate(t);
+                      return midAngle(d2) < Math.PI ? "start":"end";
+                    };
+                  });
+
+          text.exit()
+                  .remove();
+
+          /* ------- SLICE TO TEXT POLYLINES -------*/
+
+          var polyline = svg.select(".lines").selectAll("polyline")
+                  .data(pie(data), key);
+
+          polyline.enter()
+                  .append("polyline");
+
+          polyline.transition().duration(1000)
+                  .attrTween("points", function(d){
+                    this._current = this._current || d;
+                    var interpolate = d3.interpolate(this._current, d);
+                    this._current = interpolate(0);
+                    return function(t) {
+                      var d2 = interpolate(t);
+                      var pos = outerArc.centroid(d2);
+                      pos[0] = radius * 0.95 * (midAngle(d2) < Math.PI ? 1 : -1);
+                      return [arc.centroid(d2), outerArc.centroid(d2), pos];
+                    };
+                  });
+
+          polyline.exit()
+                  .remove();
+        };
+      }
+
+//      myFunctions:function(){}
+    });
+  </script>
+</dom-module>

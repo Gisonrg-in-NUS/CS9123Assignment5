@@ -70,3 +70,15 @@ app-header {
     stroke: steelblue;
     stroke-width: 1.5px;
 }
+
+/* Pie chart */
+path.slice{
+    stroke-width:2px;
+}
+
+polyline{
+    opacity: .3;
+    stroke: black;
+    stroke-width: 2px;
+    fill: none;
+}

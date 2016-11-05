@@ -52,7 +52,7 @@
       <iron-pages selected="{{selected}}">
         <all-contributions></all-contributions>
         <commit-history-by-users></commit-history-by-users>
-        <!--<commit-history-by-users></commit-history-by-users>-->
+        <commit-history-of-file></commit-history-of-file>
         <!--<commit-history-by-users></commit-history-by-users>-->
       </iron-pages>
 
@@ -102,6 +102,10 @@
           self.$$('commit-history-by-users').users = members;
           self.$$('commit-history-by-users').repoOwner = owner;
           self.$$('commit-history-by-users').repoName = repo;
+
+          self.$$('commit-history-of-file').allUsers = members;
+          self.$$('commit-history-of-file').repoOwner = owner;
+          self.$$('commit-history-of-file').repoName = repo;
         }).fail(function(jqXHR, textStatus, errorThrown) {
           alert(errorThrown);
           console.error(errorThrown);

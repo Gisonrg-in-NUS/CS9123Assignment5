@@ -72,6 +72,16 @@
           }
         });
       },
+      initRepo: function(owner, repo) {
+        return $.get('https://cs9123a5.saki.sshz.org/init/' + owner + '/' + repo);
+      },
+      getCommitsByFile: function(owner, repo, file, lines) {
+        var url = 'https://cs9123a5.saki.sshz.org/file/' + owner + '/' + repo + '/' + file;
+        if (lines) {
+          url += '?lines=' + lines;
+        }
+        return $.get(url);
+      },
       getWithPagination: function(url, page, cb) {
         var self = this;
         $.ajax({
