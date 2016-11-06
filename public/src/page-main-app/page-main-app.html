@@ -21,6 +21,16 @@
       .dropdown-menu {
         width: 250px;
       }
+
+      #subscribe-fab {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+      }
+
+      #subscribeForm {
+        width: 500px;
+      }
     </style>
 
     <!-- HTML Contents -->
@@ -57,6 +67,21 @@
         <current-version-commit></current-version-commit>
       </iron-pages>
     </div>
+
+    <paper-fab id="subscribe-fab" icon="mail" on-tap="showSubscribeForm"></paper-fab>
+
+    <paper-toast id="pageToast" text=""></paper-toast>
+
+    <paper-dialog id="subscribeForm">
+      <h2>Subscribe Notification</h2>
+      <p>We invite you to enter emails for subscription.</p>
+      <paper-textarea label="Enter emails for subscription. Separated by new line."></paper-textarea>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm autofocus on-tap="subscribe">Ok</paper-button>
+      </div>
+    </paper-dialog>
+
   </template>
   <script>
     Polymer({
@@ -82,8 +107,8 @@
 
       _repoChanged: function(repo) {
         console.log(repo);
-        var repoOwner = repo.owner.login;
-        var repoName = repo.name;
+        var repoOwner = this.repoOwner = repo.owner.login;
+        var repoName = this.repoName = repo.name;
         this._handleAllContributors(repoOwner, repoName);
         this.$$('current-version-commit').repoOwner = repoOwner;
         this.$$('current-version-commit').repoName = repoName;
@@ -137,6 +162,33 @@
         this.reset();
         this.selected = 0;
         document.querySelector('git-guard-app').showRepoSelection();
+      },
+
+      showSubscribeForm: function() {
+        this.$.subscribeForm.open();
+      },
+
+      showToast: function(message) {
+        this.$.pageToast.text = message;
+        this.$.pageToast.open();
+      },
+
+      subscribe: function() {
+        var self = this;
+        var emailReg = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+        var emails = this.$$('#subscribeForm > paper-textarea').value.split('\n');
+        emails = emails.filter(function(e) {
+          return e.trim().length > 0 && emailReg.test(e);
+        });
+        if (emails.length > 0) {
+          document.querySelector('github-api-manager').subscribeEmails(this.repoOwner, this.repoName, emails).done(function(res) {
+            console.log(res);
+            self.showToast('Subscribe successful!');
+          }).fail(function(a, b, c) {
+            console.error(b);
+            self.showToast('Subscribe failed!');
+          })
+        }
       }
     });
   </script>

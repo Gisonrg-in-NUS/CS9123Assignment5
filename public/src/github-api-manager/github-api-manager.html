@@ -110,6 +110,38 @@
           obj[curr[1]] = curr[0];
           return obj;
         }, {});
+      },
+      /**
+       * @param {string} owner repo owner
+       * @param {string} repo repo name
+       */
+      syncLoginTime: function(owner, repo) {
+        var time = moment().unix();
+        return $.ajax({
+          type: 'POST',
+          url: 'https://20eo7wu2fg.execute-api.ap-southeast-1.amazonaws.com/dev/updateTime',
+          data: JSON.stringify({
+            repo: owner + '/' + repo,
+            timestamp: time
+          }),
+          contentType: 'json',
+          dataType: 'json'
+        });
+      },
+      /**
+       * @param {string} owner repo owner
+       * @param {string} repo repo name
+       * @param {array} emails emails for subscription
+       */
+      subscribeEmails: function(owner, repo, emails) {
+        return $.post({
+          url: 'https://20eo7wu2fg.execute-api.ap-southeast-1.amazonaws.com/dev/subscribeEmails',
+          data: JSON.stringify({
+            repo: owner + '/' + repo,
+            emails: emails
+          }),
+          dataType: 'json'
+        });
       }
     });
   </script>

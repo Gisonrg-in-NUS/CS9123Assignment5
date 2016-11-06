@@ -64,6 +64,16 @@
         }).fail(function(jqXHR, textStatus, errorThrown) {
           console.error(errorThrown);
         });
+
+        // Sync time
+        apiManager.syncLoginTime(user, repo).done(function(res) {
+          console.log(res);
+
+          self.$$('page-main-app').showToast('Sync successful!');
+        }).catch(function(jqXHR, textStatus, errorThrown) {
+          console.error(textStatus);
+          self.$$('page-main-app').showToast('Sync failed!');
+        });
       },
 
       showRepoSelection: function() {
