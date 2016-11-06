@@ -88,74 +88,63 @@
 
       _drawChart: function(data) {
         var self = this;
-        var margin = {top: 40, right: 20, bottom: 200, left: 40},
-                width = 1400 - margin.left - margin.right,
-                height = 800 - margin.top - margin.bottom;
-        var svg = d3.select("#visualization-all-contribution").append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        var formatPercent = d3.format(".0%");
+        var margin = {top: 40, right: 20, bottom: 100, left: 80},
+                width = 960 - margin.left - margin.right;
 
-        var x = d3.scaleBand()
-                .range([0, width])
-                .padding(0.1);
+        var barHeight = 24;
+        var barPadding = 2;
+        var height = data.length * barHeight;
+        var y = d3.scaleBand()
+                .range([height, 0])
+                .padding(barPadding);
 
-        var y = d3.scaleLinear()
-                .range([height, 0]);
+        var x = d3.scaleLinear()
+                .range([0, width]);
 
         var xAxis = d3.axisBottom()
                 .scale(x);
 
         var yAxis = d3.axisLeft()
-                .scale(y)
-                .tickFormat(formatPercent);
+                .scale(y);
 
         var tip = d3.tip()
           .attr('class', 'd3-tip')
-          .offset([-10, 0])
+          .offset([0, 0])
           .html(function(d) {
             var display = '<strong>' + d.x + '</strong><br/><strong>Additions: </strong>' + d.a
                     + '<br/><strong>Deletions: </strong>' + d.d + '<br/><strong>Commits: </strong>' + d.c
                     + '<br/><strong>Contributions(%): </strong>' + Math.round(d.percentage * 10000) / 100 + '%';
             return display;
-          })
+          });
+
+        var svg = d3.select("#visualization-all-contribution").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         svg.call(tip);
 
-        x.domain(data.map(function(d) { return d.x; }));
-        y.domain([0, d3.max(data, function(d) { return d.percentage; })]);
+        y.domain(data.map(function(d) { return d.x; }));
+        x.domain([0, d3.max(data, function(d) { return d.c; })]);
 
         svg.append("g")
                 .attr("class", "x axis")
                 .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-                .selectAll("text")
-                .attr("y", 0)
-                .attr("x", 9)
-                .attr("dy", ".35em")
-                .attr("transform", "rotate(90)")
-                .style("text-anchor", "start");
+                .call(xAxis);
 
         svg.append("g")
                 .attr("class", "y axis")
-                .call(yAxis)
-                .append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", 6)
-                .attr("dy", ".71em")
-                .style("text-anchor", "end")
-                .text("Contributions (%)");
+                .call(yAxis);
 
         svg.selectAll(".bar")
                 .data(data)
                 .enter().append("rect")
                 .attr("class", "bar")
-                .attr("x", function(d) { return x(d.x); })
-                .attr("width", x.bandwidth())
-                .attr("y", function(d) { return y(d.percentage); })
-                .attr("height", function(d) { return height - y(d.percentage); })
+                .attr("height", 20)
+                .attr("x", 1)
+                .attr("y", function(d) { return y(d.x) - 10; })
+                .attr("width", function(d) { return x(d.c); })
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide)
                 .on("click", function(d) {
