@@ -5,11 +5,12 @@
     <style include="iron-flex iron-flex-alignment iron-flex-factors iron-positioning" type="text/css">
       :host{}
 
-      app-toolbar {
+      .app-toolbar {
         background-color: #4285f4;
         color: #fff;
         font-size: 14px;
         font-weight:lighter;
+        align-items: center;
       }
 
       .container {
@@ -34,7 +35,7 @@
     </style>
 
     <!-- HTML Contents -->
-    <app-toolbar>
+    <div class="layout horizontal app-toolbar">
       <paper-icon-button icon="accessibility"></paper-icon-button>
       <div>Watch: {{repo.watchers_count}}</div>
       <paper-icon-button icon="star" spacer></paper-icon-button>
@@ -45,7 +46,8 @@
       <div>Language:{{repo.language}}</div>
       <div class="flex"></div>
       <paper-button on-tap="backToTop">Back</paper-button>
-    </app-toolbar>
+    </div>
+
 
     <div class="container">
       <div class="menu-container">
