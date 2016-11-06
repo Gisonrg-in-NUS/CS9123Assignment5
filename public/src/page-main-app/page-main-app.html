@@ -119,7 +119,12 @@
 
       _handleAllContributors: function(owner, repo) {
         var self = this;
-        document.querySelector('github-api-manager').getAllContributors(owner, repo).done(function(res) {
+        document.querySelector('github-api-manager').getAllContributors(owner, repo).done(function(res, textStatus, jqXHR) {
+          if (jqXHR.status != 200) {
+            console.log('Oops, the backend is still processing. Retry now.');
+            self._handleAllContributors(owner, repo);
+            return;
+          }
           self.$$('all-contributions').data = res;
           // Get all user names
           var members = res.map(function(o) {
