@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "DEBUG=CS9123Assignment5 nodemon ./bin/www"
+    "start": "DEBUG=CS9123Assignment5 node ./bin/www",
+    "postinstall": "bower install"
   },
   "dependencies": {
     "body-parser": "~1.8.1",
