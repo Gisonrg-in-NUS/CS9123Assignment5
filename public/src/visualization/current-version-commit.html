@@ -27,6 +27,7 @@
       </div>
 
       <div class="table-container" hidden$="{{!shouldShowTable}}">
+        <p>*: Contributors with contribution less than 5% are not shown in the chart.</p>
         <h4>Contribution Details</h4>
         <paper-datatable data="{{contributions}}">
           <paper-datatable-column header="Author" property="author" sortable>
