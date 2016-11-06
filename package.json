@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "start": "DEBUG=CS9123Assignment5 node ./bin/www",
-    "postinstall": "bower install"
+    "postinstall": "./node_modules/bower/bin/bower install"
   },
   "dependencies": {
     "body-parser": "~1.8.1",
+    "bower": "^1.7.9",
     "cookie-parser": "~1.3.3",
     "debug": "~2.0.0",
     "dotenv": "^2.0.0",
