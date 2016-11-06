@@ -3,14 +3,9 @@
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3();
 
-const FILE_SUBSCRIPTION = {
+const FILE_REPO_DETAIL = {
   Bucket: 'cs3219.gitguard',
-  Key: 'subscription.json'
-};
-
-const FILE_SYNC_TIME = {
-  Bucket: 'cs3219.gitguard',
-  Key: 'time.json'
+  Key: 'repo.json'
 };
 
 function createErrorResponse() {
@@ -44,16 +39,17 @@ module.exports.updateTime = (event, context, callback) => {
   let repo = requestData['repo'];
   let time = requestData['timestamp'];
 
-  s3.getObject(FILE_SYNC_TIME, function(err, data) {
+  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
     if (err) {
       console.log(err, err.stack);
       callback(null, createErrorResponse());
     } else {
       var timeMapping = JSON.parse(data.Body.toString());
-      timeMapping[repo] = time;
+      timeMapping[repo] = timeMapping[repo] || {time: Math.floor(Date.now() / 1000), emails: []};
+      timeMapping[repo]['time'] = time;
       s3.putObject({
         Bucket: 'cs3219.gitguard',
-        Key: 'time.json',
+        Key: 'repo.json',
         Body: JSON.stringify(timeMapping)
       }, function(err, data) {
         if (err) {
@@ -75,28 +71,8 @@ module.exports.updateTime = (event, context, callback) => {
   });
 };
 
-module.exports.getSyncTime = (event, context, callback) => {
-  s3.getObject(FILE_SYNC_TIME, function(err, data) {
-    if (err) {
-      console.log(err, err.stack);
-      callback(null, createErrorResponse());
-    } else {
-      callback(null, {
-        statusCode: 200,
-        headers: {
-          "Access-Control-Allow-Origin" : "*"
-        },
-        body: JSON.stringify({
-          message: 'Success',
-          data: data.Body.toString()
-        }),
-      });
-    }
-  });
-};
-
-module.exports.getSubscription = (event, context, callback) => {
-  s3.getObject(FILE_SUBSCRIPTION, function(err, data) {
+module.exports.getRepoDetail = (event, context, callback) => {
+  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
     if (err) {
       console.log(err, err.stack);
       callback(null, createErrorResponse());
@@ -126,19 +102,20 @@ module.exports.subscribeEmails = (event, context, callback) => {
     return;
   }
 
-  var repo = requestData['repo'];
-  var emails = requestData['emails'];
+  var repo = requestData.repo;
+  var emails = requestData.emails;
 
-  s3.getObject(FILE_SUBSCRIPTION, function(err, data) {
+  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
     if (err) {
       console.log(err, err.stack);
       callback(null, createErrorResponse());
     } else {
       var subscriptions = JSON.parse(data.Body.toString());
-      subscriptions[repo] = emails;
+      subscriptions[repo] = subscriptions[repo] || {time: Math.floor(Date.now() / 1000), emails: []};
+      subscriptions[repo].emails = emails;
       s3.putObject({
         Bucket: 'cs3219.gitguard',
-        Key: 'subscription.json',
+        Key: 'repo.json',
         Body: JSON.stringify(subscriptions)
       }, function(err, data) {
         if (err) {

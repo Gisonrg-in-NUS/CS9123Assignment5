@@ -28,18 +28,11 @@ functions:
             path: subscribeEmails
             method: POST
             cors: true
-  getSyncTime:
-    handler: handler.getSyncTime
+  getRepoDetail:
+    handler: handler.getRepoDetail
     events:
       - http:
-          path: getSyncTime
-          method: GET
-          cors: true
-  getSubscription:
-    handler: handler.getSubscription
-    events:
-      - http:
-          path: getSubscription
+          path: getRepoDetail
           method: GET
           cors: true
 
