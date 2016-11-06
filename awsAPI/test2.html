@@ -1,0 +1,28 @@
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.24.min.js"></script>
+<script type="text/javascript">
+	AWS.config.update({
+        accessKeyId : 'AKIAJV24DBHLQGYKG5CA',
+        secretAccessKey : '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'
+    });
+    AWS.config.region = 'ap-southeast-1';
+
+</script>
+<form id="fileUploadForm" method="post" enctype="multipart/form-data">
+<input type="file" name="file" id="file" value="dataFile" required="">
+</form>
+<script>
+function test() {
+	var bucket = new AWS.S3({params: {Bucket: 'githubvisual'}});
+	var fileChooser = document.getElementById('file');
+	var file = fileChooser.files[0];
+	if (file) {
+	var params = {Key: 'EmailAddresses', ContentType: "text", Body: "cszznbb@gmail.com"};
+	bucket.upload(params).on('httpUploadProgress', function(evt) {
+	console.log("Uploaded :: " + parseInt((evt.loaded * 100) / evt.total)+'%');
+	}).send(function(err, data) {
+	alert("File uploaded successfully.");
+	});
+	}
+	return false;
+}
+</script>
