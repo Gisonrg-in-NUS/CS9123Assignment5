@@ -2,8 +2,10 @@ var express = require('express');
 var router = express.Router();
 
 /* GET users listing. */
-router.get('/', function(req, res) {
-  res.send('respond with a resource');
+router.get('/githubToken', function(req, res) {
+  res.send({
+    token: process.env.GITHUB_API_KEY
+  });
 });
 
 module.exports = router;

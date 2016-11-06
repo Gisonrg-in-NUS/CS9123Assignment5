@@ -25,6 +25,12 @@
 
       <github-api-manager></github-api-manager>
     </app-header-layout>
+
+    <iron-ajax
+            auto
+            url="/api/githubToken"
+            handle-as="json"
+            on-response="handleToken"></iron-ajax>
   </template>
   <script>
     Polymer({
@@ -44,9 +50,11 @@
 
       listeners: {},
 
-      ready:function(){},
+      ready:function(){
+      },
 
-      attached:function(){
+      handleToken: function(res) {
+        document.querySelector('github-api-manager').access_token = event.detail.response.token;
       },
 
       checkoutRepo: function(user, repo) {
