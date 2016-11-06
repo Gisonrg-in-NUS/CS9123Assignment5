@@ -102,6 +102,10 @@ mailcomposer@3.12.0:
     buildmail "3.10.0"
     libmime "2.1.0"
 
+moment:
+  version "2.15.2"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.15.2.tgz#1bfdedf6a6e345f322fe956d5df5bd08a8ce84dc"
+
 nodemailer:
   version "2.6.4"
   resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-2.6.4.tgz#5620707c55fac674b6e2e5e425708b9ad5c6b6d6"

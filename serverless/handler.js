@@ -2,6 +2,9 @@
 
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3();
+var nodemailer = require("nodemailer");
+var moment = require("moment");
+var smtpTransport = require('nodemailer-smtp-transport');
 
 const FILE_REPO_DETAIL = {
   Bucket: 'cs3219.gitguard',
@@ -136,3 +139,71 @@ module.exports.subscribeEmails = (event, context, callback) => {
     }
   });
 };
+
+
+function getMessage(since, repo) {
+  var start = moment(since * 1000);
+  var end = moment();
+  var diff = start.diff(end);
+  var o = moment.duration(diff);
+  var duration = Math.floor(o.asHours()) + 'h ' + o.minutes() + 'm ' + o.seconds() + 's';
+  return 'Hi there,\n\n' +
+    'This is a friendly notification from Shōki.\nIt has been ' + o.humanize() + ' (' + duration + ') since your last visit on ' + start.format('llll') + '(UTC) for Github repo ' + repo +
+    '.\nPlease come back and check it out.\n\nShōki Team';
+}
+
+function send(emails, repoName, lastVisit) {
+  var transport = nodemailer.createTransport(smtpTransport({
+    host: 'smtp.mailgun.org',
+    port: 587,
+    auth: {
+      user: 'shouki@railgun.sshz.org',
+      pass: '<Password>'
+    }
+  }));
+
+  // setup e-mail data with unicode symbols
+  var mailOptions = {
+    from: '"Shōki App" <shouki@railgun.sshz.org>', // sender address
+    bcc: emails,
+    subject: 'Message from Shōki', // Subject line
+    text: getMessage(lastVisit, repoName)
+  };
+
+  // send mail with defined transport object
+  transport.sendMail(mailOptions, function(error, info){
+    if(error){
+      console.error(error);
+      return;
+    }
+    console.log('Message sent: ' + info.response);
+  });
+}
+
+module.exports.sendEmail = (event, context, callback) => {
+  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
+    if (err) {
+      console.log(err, err.stack);
+    } else {
+      var mapping = JSON.parse(data.Body.toString());
+      Object.keys(mapping).forEach(function(repoName) {
+        var repoData = mapping[repoName];
+        let time = repoData.time;
+        let emails = repoData.emails;
+        send(emails, repoName, time);
+      });
+
+      callback(null, {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: JSON.stringify({
+          message: 'Success'
+        }),
+      });
+    }
+  });
+};
+
+

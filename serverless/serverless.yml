@@ -35,6 +35,17 @@ functions:
           path: getRepoDetail
           method: GET
           cors: true
+  sendEmail:
+    handler: handler.sendEmail
+    events:
+      - http:
+          path: sendEmail
+          method: GET
+          cors: true
+  sendEmailSchedule:
+      handler: handler.sendEmail
+      events:
+        - schedule: cron(0 10 ? * SUN *)
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
