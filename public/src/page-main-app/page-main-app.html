@@ -18,6 +18,7 @@
       }
       .menu-container {
         padding: 8px 10px;
+        align-items: center;
       }
       .dropdown-menu {
         width: 250px;
@@ -50,8 +51,8 @@
 
 
     <div class="container">
-      <div class="menu-container">
-        Visualization:
+      <div class="menu-container layout horizontal">
+        <span>Choose Visualization:</span>
         <paper-dropdown-menu class="dropdown-menu">
           <paper-listbox class="dropdown-content" selected="{{selected}}">
             <paper-item>All Contributions</paper-item>
