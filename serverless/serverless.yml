@@ -43,10 +43,16 @@ functions:
           method: GET
           cors: true
   sendEmailSchedule:
-      handler: handler.sendEmail
-      events:
-        - schedule: cron(0 10 ? * SUN *)
-
+    handler: handler.sendEmail
+    events:
+      - schedule: cron(0 10 ? * SUN *)
+  unsubscribe:
+    handler: handler.unsubscribeEmails
+    events:
+      - http:
+          path: unsubscribe
+          method: GET
+          cors: true
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details

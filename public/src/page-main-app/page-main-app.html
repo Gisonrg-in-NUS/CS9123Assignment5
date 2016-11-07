@@ -185,8 +185,8 @@
         var self = this;
         var emailReg = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
         var emails = this.$$('#subscribeForm > paper-textarea').value.split('\n');
-        emails = emails.filter(function(e) {
-          return e.trim().length > 0 && emailReg.test(e);
+        emails = emails.filter(function(e, index, self) {
+          return e.trim().length > 0 && emailReg.test(e) && index == self.indexOf(e);
         });
         if (emails.length > 0) {
           document.querySelector('github-api-manager').subscribeEmails(this.repoOwner, this.repoName, emails).done(function(res) {
@@ -197,6 +197,13 @@
             self.showToast('Subscribe failed!');
           })
         }
+      },
+
+      setEmailValues(emails) {
+        var text = emails.reduce(function(pre, cur) {
+          return pre + '\n' + cur;
+        }, '').trim();
+        this.$$('#subscribeForm > paper-textarea').value = text;
       }
     });
   </script>

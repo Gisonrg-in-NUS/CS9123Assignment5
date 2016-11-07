@@ -74,7 +74,9 @@
 
           // Sync time
           apiManager.syncLoginTime(user, repo).done(function(res) {
-            self.$$('page-main-app').showToast('Sync successful!');
+            var mainApp = self.$$('page-main-app');
+            mainApp.showToast('Sync successful!');
+            mainApp.setEmailValues(res.emails)
           }).catch(function(jqXHR, textStatus, errorThrown) {
             console.error(textStatus);
             self.$$('page-main-app').showToast('Sync failed!');

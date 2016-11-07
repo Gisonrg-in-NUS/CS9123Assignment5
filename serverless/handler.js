@@ -42,7 +42,7 @@ module.exports.updateTime = (event, context, callback) => {
   let repo = requestData['repo'];
   let time = requestData['timestamp'];
 
-  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
+  s3.getObject(FILE_REPO_DETAIL, function (err, data) {
     if (err) {
       console.log(err, err.stack);
       callback(null, createErrorResponse());
@@ -54,7 +54,7 @@ module.exports.updateTime = (event, context, callback) => {
         Bucket: 'cs3219.gitguard',
         Key: 'repo.json',
         Body: JSON.stringify(timeMapping)
-      }, function(err, data) {
+      }, function (err, data) {
         if (err) {
           console.log(err, err.stack);
           callback(null, createErrorResponse());
@@ -65,7 +65,8 @@ module.exports.updateTime = (event, context, callback) => {
               "Access-Control-Allow-Origin": "*"
             },
             body: JSON.stringify({
-              message: 'Success'
+              message: 'Success',
+              emails: timeMapping[repo].emails
             }),
           });
         }
@@ -75,7 +76,7 @@ module.exports.updateTime = (event, context, callback) => {
 };
 
 module.exports.getRepoDetail = (event, context, callback) => {
-  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
+  s3.getObject(FILE_REPO_DETAIL, function (err, data) {
     if (err) {
       console.log(err, err.stack);
       callback(null, createErrorResponse());
@@ -83,7 +84,7 @@ module.exports.getRepoDetail = (event, context, callback) => {
       callback(null, {
         statusCode: 200,
         headers: {
-          "Access-Control-Allow-Origin" : "*"
+          "Access-Control-Allow-Origin": "*"
         },
         body: JSON.stringify({
           message: 'Success',
@@ -108,7 +109,7 @@ module.exports.subscribeEmails = (event, context, callback) => {
   var repo = requestData.repo;
   var emails = requestData.emails;
 
-  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
+  s3.getObject(FILE_REPO_DETAIL, function (err, data) {
     if (err) {
       console.log(err, err.stack);
       callback(null, createErrorResponse());
@@ -120,7 +121,7 @@ module.exports.subscribeEmails = (event, context, callback) => {
         Bucket: 'cs3219.gitguard',
         Key: 'repo.json',
         Body: JSON.stringify(subscriptions)
-      }, function(err, data) {
+      }, function (err, data) {
         if (err) {
           console.log(err, err.stack);
           callback(null, createErrorResponse());
@@ -140,112 +141,95 @@ module.exports.subscribeEmails = (event, context, callback) => {
   });
 };
 
+function hashCode(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+        hash = ~~(((hash << 5) - hash) + str.charCodeAt(i));
+    }
+    return hash;
+}
+
+module.exports.unsubscribeEmails = (event, context, callback) => {
+  if (!event.queryStringParameters && !event.queryStringParameters.email && !event.queryStringParameters.repo) {
+    callback(null, createInvalidResponse());
+    return;
+  }
+  var repo = event.queryStringParameters.repo; // repo hash
+  var email = event.queryStringParameters.email; // email hash
+
+  s3.getObject(FILE_REPO_DETAIL, function (err, data) {
+    if (err) {
+      console.log(err, err.stack);
+    } else {
+      var mapping = JSON.parse(data.Body.toString());
+      Object.keys(mapping).filter(function(k) {
+        return hashCode(k) == repo; // find repo
+      }).forEach(function(k) {
+        var repoData = mapping[k];
+        repoData.emails = repoData.emails.filter(function(e) {
+          return hashCode(e) != email; // remove that email
+        });
+      });
+      s3.putObject({
+        Bucket: 'cs3219.gitguard',
+        Key: 'repo.json',
+        Body: JSON.stringify(mapping)
+      }, function (err, data) {
+        if (err) {
+          console.log(err, err.stack);
+          callback(null, createErrorResponse());
+        } else {
+          callback(null, {
+            statusCode: 200,
+            headers: {
+              "Access-Control-Allow-Origin": "*"
+            },
+            body: JSON.stringify({
+              message: 'Success'
+            }),
+          });
+        }
+      });
+    }
+  });
+};
 
 function getMessage(since, repo) {
   var start = moment(since * 1000);
   var end = moment();
   var diff = start.diff(end);
   var o = moment.duration(diff);
-  var duration = Math.floor(o.asHours()) + 'h ' + o.minutes() + 'm ' + o.seconds() + 's';
+  var duration = Math.floor(-o.asHours()) + 'h ' + -o.minutes() + 'm ' + -o.seconds() + 's';
   return 'Hi there,\n\n' +
     'This is a friendly notification from Shōki.\nIt has been ' + o.humanize() + ' (' + duration + ') since your last visit on ' + start.format('llll') + '(UTC) for Github repo ' + repo +
     '.\nPlease come back and check it out.\n\nShōki Team';
 }
 
-/*You may try this for a unsubscribe function
-*/
-// function hashCode(str) {
-//     var hash = 0;
-//     for (var i = 0; i < str.length; i++) {
-//         hash = ~~(((hash << 5) - hash) + str.charCodeAt(i));
-//     }
-//     return hash;
-// }
+function getMessageWithHash(since, repo, email) {
+  var start = moment(since * 1000);
+  var end = moment();
+  var diff = start.diff(end);
+  var o = moment.duration(diff);
+  var duration = Math.floor(-o.asHours()) + 'h ' + -o.minutes() + 'm ' + -o.seconds() + 's';
+  // Hash code value
+  var hashRepo = hashCode(repo);
+  var hashEmail = hashCode(email);
+  var textMessage = 'Hi there,\n\n' +
+    'This is a friendly notification from Shōki.\nIt has been ' + o.humanize() + ' (' + duration + ') since your last visit on ' + start.format('llll') + '(UTC) for Github repo ' + repo +
+    '.\nPlease come back and check it out.\nIf you would like to unsubscribe, please click the following link:\n' +
+    'https://20eo7wu2fg.execute-api.ap-southeast-1.amazonaws.com/dev/unsubscribe?email=' + hashEmail + '&repo=' + hashRepo + '\nShōki Team';
 
-// function getMessageWithHash(since, repo, emailAddress) {
-//   var start = moment(since * 1000);
-//   var end = moment();
-//   var diff = start.diff(end);
-//   var o = moment.duration(diff);
-//   var duration = Math.floor(o.asHours()) + 'h ' + o.minutes() + 'm ' + o.seconds() + 's';
-//   var newStr = repo + emailAddress;
-//   var hashValue = hashCode(newStr);
-//   return 'Hi there,\n\n' +
-//     'This is a friendly notification from Shōki.\nIt has been ' + o.humanize() + ' (' + duration + ') since your last visit on ' + start.format('llll') + '(UTC) for Github repo ' + repo +
-//     '.\nPlease come back and check it out. If you would like to unsubscribe, please click the following link\n'
-//     +'apiaddress?value='+hashValue+'\nShōki Team';
-// }
+  var htmlMessage = '<p>Hi there,</p>' +
+    '<br/>' +
+    '<p>This is a friendly notification from Shōki.</p>' +
+    '<p>It has been ' + o.humanize() + ' (' + duration + ') since your last visit on ' + start.format('llll') + '(UTC) for Github repo ' + repo +'.</p>' +
+    '<p>Please come back and check it out :)</p>' +
+    '<p>If you would like to unsubscribe, please click <a href="https://20eo7wu2fg.execute-api.ap-southeast-1.amazonaws.com/dev/unsubscribe?email=' + hashEmail + '&repo=' + hashRepo + '">here</a> to unsubscribe.</p>' +
+    '<br/>' +
+    '<p>Shōki Team</p>';
 
-// module.exports.unsubscribeEmails = (event, context, callback) => {
-//   if (!event.body) {
-//     callback(null, createInvalidResponse());
-//     return;
-//   }
-//   var requestData = JSON.parse(event.body);
-//   if (!('value' in requestData)) {
-//     callback(null, createInvalidResponse());
-//     return;
-//   }
-//   var value = requestData.value;
-//   var targetRepo;
-//   var targetEmail;
-//   var targetPosition;
-//   var find = 0;
-//   s3.getObject(FILE_REPO_DETAIL, function(err, data) {
-//    if (err) {
-//       console.log(err, err.stack);
-//     } else {
-//       var mapping = JSON.parse(data.Body.toString());
-//       Object.keys(mapping).forEach(function(repoName) {
-//         if (find == 1) return;
-//         var repoData = mapping[repoName];
-//         let time = repoData.time;
-//         let emails = repoData.emails;
-//         for (var i = 0; i < emails.length; i++){
-//           if (hashCode(repoName + emails[i]) == value){
-//             targetRepo = repoName;
-//             targetEmail = emails[i];
-//             trgetPosition = i;
-//             find = 1;
-//             break;
-//           }
-//         }
-//       });
-//     }
-//   });
-//   s3.getObject(FILE_REPO_DETAIL, function(err, data) {
-//     if (err) {
-//       console.log(err, err.stack);
-//       callback(null, createErrorResponse());
-//     } else {
-//       var subscriptions = JSON.parse(data.Body.toString());
-//       subscriptions[targetRepo].emails.splice(targetPosition,1);
-//       s3.putObject({
-//         Bucket: 'cs3219.gitguard',
-//         Key: 'repo.json',
-//         Body: JSON.stringify(subscriptions)
-//       }, function(err, data) {
-//         if (err) {
-//           console.log(err, err.stack);
-//           callback(null, createErrorResponse());
-//         } else {
-//           callback(null, {
-//             statusCode: 200,
-//             headers: {
-//               "Access-Control-Allow-Origin": "*"
-//             },
-//             body: JSON.stringify({
-//               message: 'Success'
-//             }),
-//           });
-//         }
-//       });
-//     }
-//   });
-// };
-
-
-
+  return [textMessage, htmlMessage];
+}
 
 function send(emails, repoName, lastVisit) {
   var transport = nodemailer.createTransport(smtpTransport({
@@ -258,32 +242,34 @@ function send(emails, repoName, lastVisit) {
   }));
 
   // setup e-mail data with unicode symbols
-  var mailOptions = {
-    from: '"Shōki App" <shouki@railgun.sshz.org>', // sender address
-    bcc: emails,
-    subject: 'Message from Shōki', // Subject line
-    text: getMessage(lastVisit, repoName)
-  };
-
-  // send mail with defined transport object
-  transport.sendMail(mailOptions, function(error, info){
-    if(error){
-      console.error(error);
-      return;
-    }
-    console.log('Message sent: ' + info.response);
+  emails.map(function(e) {
+    var message = getMessageWithHash(lastVisit, repoName, e);
+    return {
+      from: '"Shōki App" <shouki@railgun.sshz.org>', // sender address
+      to: e,
+      subject: 'Message from Shōki', // Subject line
+      text: message[0],
+      html: message[1]
+    };
+  }).map(function(mailOptions) {
+    transport.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.log('Message sent: ' + info.response);
+    });
   });
 }
 
 
-
 module.exports.sendEmail = (event, context, callback) => {
-  s3.getObject(FILE_REPO_DETAIL, function(err, data) {
+  s3.getObject(FILE_REPO_DETAIL, function (err, data) {
     if (err) {
       console.log(err, err.stack);
     } else {
       var mapping = JSON.parse(data.Body.toString());
-      Object.keys(mapping).forEach(function(repoName) {
+      Object.keys(mapping).forEach(function (repoName) {
         var repoData = mapping[repoName];
         let time = repoData.time;
         let emails = repoData.emails;
