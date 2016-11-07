@@ -64,29 +64,32 @@
           self.selected = 1;
           self.title = res.full_name;
           self.$$('page-main-app').repo = res;
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-          console.error(errorThrown);
-        });
-        apiManager.initRepo(user, repo).done(function(res) {
-          console.log(res);
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-          console.error(errorThrown);
-        });
 
-        // Sync time
-        apiManager.syncLoginTime(user, repo).done(function(res) {
-          console.log(res);
+          // Only when it success.
+          apiManager.initRepo(user, repo).done(function(res) {
+            console.log(res);
+          }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error(errorThrown);
+          });
 
-          self.$$('page-main-app').showToast('Sync successful!');
-        }).catch(function(jqXHR, textStatus, errorThrown) {
-          console.error(textStatus);
-          self.$$('page-main-app').showToast('Sync failed!');
+          // Sync time
+          apiManager.syncLoginTime(user, repo).done(function(res) {
+            self.$$('page-main-app').showToast('Sync successful!');
+          }).catch(function(jqXHR, textStatus, errorThrown) {
+            console.error(textStatus);
+            self.$$('page-main-app').showToast('Sync failed!');
+          });
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 404) {
+            self.$$('page-repo-selection').showError('Repo Not Found');
+          }
         });
       },
 
       showRepoSelection: function() {
         this.selected = 0;
         this.title = 'Shōki';
+        this.$$('page-repo-selection').reset();
       }
     });
   </script>

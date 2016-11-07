@@ -110,8 +110,10 @@
           self.selectedCommitAuthor = 'All';
           self.shouldShowTable = true;
           self.draw(res);
-        }).fail(function(jQHX, text) {
-          alert(text);
+        }).fail(function(res, text) {
+          if (res.status == 404) {
+            alert('Non-existing file.');
+          }
         });
       },
 

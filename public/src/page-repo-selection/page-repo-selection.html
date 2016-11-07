@@ -27,6 +27,10 @@
         width: 100%;
         height: 100%;
       }
+      
+      [hidden] {
+        display: none;
+      }
     </style>
 
     <!-- HTML Contents -->
@@ -40,6 +44,7 @@
         </paper-input>
         <div class="center-text">
           <paper-button raised id="btn-select-repo">Go</paper-button>
+          <paper-spinner></paper-spinner>
         </div>
       </div>
       <div class="flex"></div>
@@ -58,16 +63,21 @@
       ready: function () {
         var pattern = /^([\w\-\.]+)\/([\w\-\.]+)$/
         var self = this;
-        this.$$('#btn-select-repo').addEventListener('click', function (e) {
+        var spinner = this.$$('paper-spinner');
+        var button = this.$$('#btn-select-repo');
+        var input = self.$$('#input-github-repo');
+        button.addEventListener('click', function (e) {
           e.preventDefault();
-          var input = self.$$('#input-github-repo');
           var githubUrl = input.value.trim();
           var isMatch = githubUrl.match(pattern);
           if (isMatch) {
             var userName = isMatch[1];
             var repoName = isMatch[2];
             document.querySelector('git-guard-app').checkoutRepo(userName, repoName);
+            spinner.active = true;
+            button.setAttribute('hidden', true);
           } else {
+            input.setAttribute('error-message', 'Please check your repo format');
             input.invalid = true;
           }
         });
@@ -79,6 +89,25 @@
 
       attached: function () {
         particlesJS.load('particles-js', 'particles.json');
+      },
+
+      showError: function(message) {
+        var input = this.$$('#input-github-repo');
+        var spinner = this.$$('paper-spinner');
+        var button = this.$$('#btn-select-repo');
+        input.invalid = true;
+        input.setAttribute('error-message', message);
+        spinner.active = false;
+        button.removeAttribute('hidden');
+      },
+
+      reset: function() {
+        var input = this.$$('#input-github-repo');
+        var spinner = this.$$('paper-spinner');
+        var button = this.$$('#btn-select-repo');
+        input.invalid = false;
+        spinner.active = false;
+        button.removeAttribute('hidden');
       }
     });
   </script>
