@@ -17,13 +17,16 @@
       [hidden] {
         display:none;
       }
+      paper-button {
+        margin-top: 4px;
+      }
     </style>
 
     <!-- HTML Contents -->
     <div class="container">
       <div class="input-form">
-        <paper-input name="file" label="File Path e.g. README.md" required></paper-input>
-        <paper-input name="lines" label="Lines (optional) e.g. 1,10" error-message="Please check your input"></paper-input>
+        <paper-input name="file" label="File Path e.g. README.md" required error-message="Please check the input file path."></paper-input>
+        <paper-input name="lines" label="Lines (optional) e.g. 1,10" error-message="Please check your input format."></paper-input>
         <paper-button raised on-tap="update">Update</paper-button>
       </div>
       <div class="chart-container">
@@ -99,6 +102,10 @@
           this.$$('paper-input[name=file]').invalid = true;
           return;
         }
+        if (lines && !/^\d+\,\d+$/.test(lines)) {
+          this.$$('paper-input[name=lines]').invalid = true;
+          return;
+        }
         var self = this;
         document.querySelector('github-api-manager').getCommitsByFile(this.repoOwner, this.repoName, fileName, lines).done(function(res, textStatus, xhr) {
           if (xhr.status == 202) {
@@ -112,7 +119,7 @@
           self.draw(res);
         }).fail(function(res, text) {
           if (res.status == 404) {
-            alert('Non-existing file.');
+            alert('The file requested does not exist.');
           }
         });
       },

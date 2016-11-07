@@ -22,11 +22,17 @@
       [hidden] {
         display:none;
       }
+      .spinner-container {
+        text-align: center;
+      }
     </style>
 
     <!-- HTML Contents -->
     <div class="container">
       <p>Contributions of all team members</p>
+      <div class="spinner-container">
+        <paper-spinner active></paper-spinner>
+      </div>
       <div id="visualization-all-contribution">
       </div>
       <div class="member-detail">
@@ -79,6 +85,7 @@
           return x;
         });
         this._drawChart(user_data);
+        this.$$('paper-spinner').active = false;
       },
 
       cleanUp: function() {
